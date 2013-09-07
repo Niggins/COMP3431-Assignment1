@@ -1,7 +1,7 @@
 <launch>
-	<include file="$(find assign1_2013)/launch/beacons/trial.launch" />
+	<include file="$(find asst1)/launch/beacons/trial.launch" />
 	
-    <node pkg="assign1_2013" type="visual" name="field" output="screen" >
+    <node pkg="asst1" type="visual" name="field" output="screen" >
     </node>
 	
     <node pkg="image_view" type="image_view" name="field_view" />
