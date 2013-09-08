@@ -1,0 +1,28 @@
+<launch>
+	<include file="$(find asst1)/launch/beacons/trial.launch" />
+	<include file="$(find asst1)/launch/path.launch" />
+	
+    <node pkg="asst1" type="visual" name="field" output="screen" >
+    </node>
+	<node pkg="asst1" type="simple_nav" name="simple_nav">
+    </node>
+
+	<node pkg="robot_pose_ekf" type="robot_pose_ekf" name="robot_pose_ekf">
+	    <param name="output_frame" value="odom"/>
+	    <param name="freq" value="30.0"/>
+	    <param name="sensor_timeout" value="1.0"/>
+	    <param name="odom_used" value="true"/>
+	    <param name="imu_used" value="true"/>
+	    <param name="vo_used" value="true"/>
+	    <param name="debug" value="false"/>
+	    <param name="self_diagnose" value="false"/>
+	    <param name="pub_odometry" value="true"/>
+        <remap from="odom" to="odom_combined"/>
+	</node>
+
+    <node pkg="image_view" type="image_view" name="field_view" />
+    <node pkg="image_view" type="image_view" name="camera_view" >
+      <remap from="image" to="/camera/rgb/image_color" />
+    </node>
+
+</launch>
