@@ -12,6 +12,7 @@
 #include <geometry_msgs/Twist.h>
 #include <std_msgs/Float64.h>
 #include <geometry_msgs/Pose.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <nav_msgs/Odometry.h>
 
 //Check Numbers
@@ -30,7 +31,7 @@ private:
     ros::Publisher geomPub;
     ros::Subscriber posSub;
     std::vector< geometry_msgs::Point > dest;
-    geometry_msgs::Twist stop;
+    geometry_msgs::Twist cmd;
 
     float facingDest(geometry_msgs::Pose _pose, geometry_msgs::Point _dest){
       float adj = _pose.position.x - _dest.x;
@@ -53,7 +54,7 @@ public:
    * Determines whether next destination is and turns towards it
    * and travels forward if nothing is in the way
    */
-  void posCallback(const nav_msgs::Odometry & msg){
+  void posCallback(const geometry_msgs::PoseWithCovarianceStamped &msg){
     ROS_INFO("Pos Callback occured");
     if (dest.empty()){
       //Done
@@ -75,13 +76,11 @@ public:
     
     //Do we need transforms here... does it matter??
 
-    geometry_msgs::Twist cmd;
-    cmd.linear.y = cmd.linear.x = cmd.angular.z = 0.0;
     //Check covariance... if greater than threshold, spin
 
     if (!acceptableCov(msg.pose.covariance)){
+      cmd.linear.y = cmd.linear.x = 0.0;
       cmd.angular.z = SPIN_SEARCH_SPEED;
-      geomPub.publish(cmd);
       return;
     }
 
@@ -89,25 +88,28 @@ public:
     if (diffAngle < ANGLE_THRESHOLD && diffAngle > -ANGLE_THRESHOLD){
       //Correct facin g direction
       cmd.linear.x = FORWARD_SPEED;
+      cmd.linear.y = cmd.angular.z = 0.0;
     } else {
       //Turn to face correct direction     
+      cmd.linear.x = cmd.linear.y = 0.0;
       cmd.angular.z = TURN_SPEED;
       if (diffAngle < 0)
         cmd.angular.z = -TURN_SPEED;
     }
-
-    geomPub.publish(cmd);
-
   }
 
   void init(){
     comp3431::Path path;
     dest = path.points;
     ros::NodeHandle nh;
-    geomPub = nh.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
-    posSub = nh.subscribe("/odom_combined", 1, &simple_nav::posCallback, this);
+    geomPub = nh.advertise<geometry_msgs::Twist>("unsafe_cmd_vel", 1);
+    posSub = nh.subscribe("robot_pose_ekf/odom_combined", 1, &simple_nav::posCallback, this);
+    cmd.linear.x = FORWARD_SPEED;
+    cmd.linear.y = cmd.angular.z = 0.0;
+  }
 
-    stop.linear.x = stop.linear.y = stop.angular.z = 0.0;
+  void publish(){
+    geomPub.publish(cmd);
   }
 };
 
@@ -115,6 +117,13 @@ public:
     ros::init(argc, argv, "simple_nav");
     simple_nav nav;
     nav.init();
-    ros::spin();
+    ros::Rate loop_rate(3);
+
+    while (ros::ok()){
+        nav.publish();
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
+
     return 0;
   }

@@ -21,8 +21,8 @@ int whichRange = -1;
 int turnDirection = 0;
 bool isSafetyNeeded = false, normalRun = true;
 
-geometry_msgs::Twist safe_cmdVel = NULL;
-geometry_msgs::Twist original_cmdVel = NULL;
+geometry_msgs::Twist safe_cmdVel; // = NULL; *** Cannot do this
+geometry_msgs::Twist original_cmdVel; // = NULL;
 
 
 void laser_scan(const sensor_msgs::LaserScan & laserscan)
