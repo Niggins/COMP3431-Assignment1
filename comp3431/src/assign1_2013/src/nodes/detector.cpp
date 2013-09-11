@@ -49,6 +49,9 @@ public:
     }
 
     IplImage cvImage = src;
+    IplImage* cvImagePtr = &cvImage;
+    /*IplImage cvImageHsv;
+    cvCvtColor(cvImage, cvImageHsv, CV_BGR2HSV);
     IplImage* imgYellow = cvCreateImage(cvGetSize(&cvImage), IPL_DEPTH_8U, 1);
     cvInRangeS(&cvImage, cvScalar(22, 100, 100), cvScalar(30, 255, 255), imgYellow);
     /*IplImage* imgBlue = cvCreateImage(cvGetSize(&cvImage), IPL_DEPTH_8U, 1);
@@ -57,14 +60,15 @@ public:
     cvInRangeS(&cvImage, cvScalar(44, 100, 100), cvScalar(65, 255, 255), imgGreen);
     IplImage* imgPink = cvCreateImage(cvGetSize(&cvImage), IPL_DEPTH_8U, 1);
     cvInRangeS(&cvImage, cvScalar(160, 100, 100), cvScalar(170, 255, 255), imgPink);*/
+    detect_beacons(cvImagePtr);
 
-    dst = cv::cvarrToMat(imgYellow);
-    cv::imshow(WINDOW, dst);
+    //dst = cv::cvarrToMat(imgYellow);
+    //cv::imshow(WINDOW, dst);
     cv::waitKey(3);
 
     image_pub_.publish(cv_ptr->toImageMsg());
   }
-	/*void detect_beacons(IplImage& cvImage){
+	void detect_beacons(IplImage* cvImage){
 		//color  detection
 		IplImage* frame = 0;
 		IplImage* imgThresh = 0;
@@ -75,11 +79,11 @@ public:
 		cvCvtColor(frame, imgHSV, CV_BGR2HSV);
 
 		imgThresh=cvCreateImage(cvGetSize(imgHSV),IPL_DEPTH_8U, 1);
-		cvInRangeS(imgHSV, cvScalar(212,160,60), cvScalar(227,255,255), imgThresh);
-		cvSmooth(imgThresh, imgThresh, CV_GAUSSIAN,3,3);
+		cvInRangeS(imgHSV, cvScalar(160,100,100), cvScalar(170,255,255), imgThresh);
+		//cvSmooth(imgThresh, imgThresh, CV_GAUSSIAN,3,3);
 		cvShowImage("Found beacons", imgThresh);
 
-	}*/
+	}
 
 };
 
