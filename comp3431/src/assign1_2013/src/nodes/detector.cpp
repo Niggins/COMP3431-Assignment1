@@ -16,7 +16,7 @@ class ImageConverter
   image_transport::ImageTransport it_;
   image_transport::Subscriber image_sub_;
   image_transport::Publisher image_pub_;
-  cv::Mat src, proc, out;
+  cv::Mat src, proc, out, erosion, dilation, elementRect, elementCross, coloured;
 
   cv::Mat threshold_output, drawing;
   std::vector<std::vector<cv::Point> > contours;
@@ -57,12 +57,29 @@ public:
 
     cv::Mat pinkOut, blueOut, greenOut, yellowOut, pbOut, gyOut;
     cv::inRange(proc, cv::Scalar(158, 120, 120), cv::Scalar(168, 200, 200), pinkOut);
-    cv::inRange(proc, cv::Scalar(100, 120, 120), cv::Scalar(123, 170, 200), blueOut);
-    cv::inRange(proc, cv::Scalar(44, 120, 120), cv::Scalar(65, 170, 200), greenOut);
-    cv::inRange(proc, cv::Scalar(30, 120, 120), cv::Scalar(40, 170, 200), yellowOut);
+    cv::inRange(proc, cv::Scalar(100, 127, 77), cv::Scalar(110, 192, 179), blueOut);
+    cv::inRange(proc, cv::Scalar(75, 127, 35), cv::Scalar(90, 230, 110), greenOut);
+    cv::inRange(proc, cv::Scalar(23, 120, 120), cv::Scalar(30, 170, 200), yellowOut);
     cv::bitwise_or(pinkOut, blueOut, pbOut);
     cv::bitwise_or(greenOut, yellowOut, gyOut);
     cv::bitwise_or(pbOut, gyOut, threshold_output);
+    threshold_output = blueOut;
+
+    //setting dimensions of new images
+    erosion.create(proc.rows, proc.cols, proc.type());
+    dilation.create(proc.rows, proc.cols, proc.type());
+
+    int numberOfIterations = 5;
+    int erosion_size=1; //width of the "brush" for the process
+    elementCross = cv::getStructuringElement( cv::MORPH_CROSS, cv::Size( 2*erosion_size + 1, 2*erosion_size+1 ),
+                                        cv::Point( erosion_size, erosion_size ) );
+    elementRect = cv::getStructuringElement( cv::MORPH_RECT, cv::Size( 2*erosion_size + 1, 2*erosion_size+1 ),
+                                               cv::Point( erosion_size, erosion_size ) );
+
+    //erozja wlasciwa
+    cv::erode(threshold_output, erosion, elementCross);
+    cv::medianBlur(erosion, erosion, 5);
+    cv::dilate(erosion, threshold_output, elementRect);
 
 
 
