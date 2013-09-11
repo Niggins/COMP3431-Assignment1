@@ -7,7 +7,7 @@
 
 #define HIGH_COV 9999
 #define LOW_COV 0.01
-#define UP_COV 0.2
+#define UP_COV 0.1
 #define PI 3.1415926
 /**
  * Logic: determine intersecting points from position and distances
