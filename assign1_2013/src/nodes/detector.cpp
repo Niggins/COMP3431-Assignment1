@@ -15,7 +15,8 @@ class ImageConverter
   image_transport::ImageTransport it_;
   image_transport::Subscriber image_sub_;
   image_transport::Publisher image_pub_;
-
+  ros::Subscriber laserScan;
+  sensor_msgs::LaserScan scan;
 public:
   ImageConverter()
     : it_(nh_)
@@ -34,31 +35,40 @@ public:
   void imageCb(const sensor_msgs::ImageConstPtr& msg)
   {
     cv_bridge::CvImagePtr cv_ptr;
-    IplImage *cvImage = NULL;
     try
     {
       cv_ptr = cv_bridge::toCvCopy(msg, enc::BGR8);
-      cvImage = cv_ptr;
     }
     catch (cv_bridge::Exception& e)
     {
       ROS_ERROR("cv_bridge exception: %s", e.what());
       return;
     }
-
-    detect_beacons(cvImage);
+    IplImage cvImage = (IplImage) cv_ptr->image;
+    detect_beacons(&cvImage);
 
     cv::imshow(WINDOW, cv_ptr->image);
     cv::waitKey(3);
 
     image_pub_.publish(cv_ptr->toImageMsg());
   }
+
+  void scanCallback(const sensor_msgs::LaserScan &laserscan) {
+    scan = laserscan;
+  }
+
+  // Pass angle in radians?? what is easiest
+  double getDist(float angle){
+    double increment = scan.angle_increment;
+    int pos = angle/increment;  
+    return scan.ranges[pos];
+  }
 private:
 	void detect_beacons(IplImage *cvImage){
 		//color  detection
 		IplImage *frame = 0;
 		IplImage* imgThresh = 0;
-		frame = cvCloneImage(cvImage);
+		frame = cvImage;
 		cvSmooth(frame, frame, CV_GAUSSIAN,3,3);
 
 		IplImage* imgHSV = cvCreateImage(cvGetSize(frame), IPL_DEPTH_8U, 3);
@@ -78,6 +88,7 @@ int main(int argc, char** argv)
   cvNamedWindow("Found beacons");
   ros::init(argc, argv, "image_converter");
   ImageConverter ic;
+  laserscan = n.subscribe("/scan", 1, &scanCallback);
   ros::spin();
   cvDestroyWindow("Found beacons");
   return 0;
