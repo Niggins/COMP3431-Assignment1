@@ -1,0 +1,20 @@
+How to run turtlebot:
+- ssh into the turtlebot with ssh <name>
+- run the following to start the turtlebot roscore:
+source /opt/ros/groovy/setup.bash
+export TURTLEBOT_BASE=create
+export TURTLEBOT_STACKS=circles
+export TURTLEBOT_3D_SENSOR=kinect
+roslaunch turtlebot_bringup minimal.launch 
+
+- open another ssh and run "rosrun hokuyo_node hokuyo_node" to start the laser
+
+--On the Mac--
+For each terminal first run "export ROS_MASTER_URI=http://<robot_name>:11311"
+- run ./safety_first from devel/lib/assign1_2013
+- run ./simple_nav
+- run "roslaunch simple_nav.launch" from the launch folder
+
+- run other nodes as required
+
+
