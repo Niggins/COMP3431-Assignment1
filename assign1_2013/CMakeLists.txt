@@ -70,6 +70,7 @@ include_directories(
 add_library(assign1_2013
   src/beacons.cpp
   src/path.cpp
+  src/trig.cpp
 )
 
 ## Declare a cpp executable
@@ -98,6 +99,7 @@ target_link_libraries(safety_first
 target_link_libraries(detector
    ${catkin_LIBRARIES}
 )
+
 #############
 ## Install ##
 #############
@@ -132,6 +134,11 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #   # myfile2
 #   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 # )
+
+install(DIRECTORY launch/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
+  PATTERN ".svn" EXCLUDE
+)
 
 #############
 ## Testing ##

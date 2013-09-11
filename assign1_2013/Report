@@ -4,23 +4,36 @@ Explain algo's & Behaviours you have used -> why you have chosen to do it that w
 
 == Visual Localisation ==
 = Visual Recognition =
-We use openCV to analyse the image provided by the kinect. This allows us to detect the beacons and their approximate angle from where we are facing.
-Then we use the laser to detect the proper distance to the beacons and the exact angles. This can then be passed to the trig position calculator to determine
-the position and orientation from vo. This can then be passed to the ekf.
+We use openCV to analyse the image provided by the kinect. This allows us to detect the 
+beacons and their approximate angle from where we are facing. This is done through....???????
+
+Then we use the laser to detect the proper distance to the beacon, as we cannot be completely 
+accurate with the angle the laser checks 0.1 radians either side of the provided angle to 
+check if the beacon is there. This can then be passed to the trig position calculator to 
+determine the position and orientation for vo. This can then be passed to the ekf.
 
 = Trig Position Calculations =
 The trig calculations are performed using two visible beacons, the distances & angles to each.
 From this data we can work out two possible positions using circle intersections.
-Then we can determine the actual position because we know which beacon is on the left and which is on the right.
+Then we can determine the actual position because we know which beacon is on the left and
+which is on the right.
+If only one or no beacons are visible then it will respond with the previous calculation with 
+a higher covariance.
 
-To find its orientation using this position and the position of one beacon and its angle from the centre.
-This enables us to use trigonometry to determine the angle we are facing by determining the angle we would be facing if 
+To find its orientation using this position and the position of one beacon and its angle from 
+the centre.
+This enables us to use trigonometry to determine the angle we are facing by determining the 
+angle we would be facing if 
 we were looking at the beacon directly and removing the offset.
 
 == Simple Path Follower ==
 
-The path follower is extremely basic. It determines where it is using the ekf and where it needs to go from the provided destinations. This allows the robot to 
-determine whether we are facing the next goal. If not we rotate until we do and then we move forward until we reach to goal location. The twist is sent through 
-a safety node which determines whether we need to stop due to an object in the way. This object detection is done through laser detection. If there is something in 
-the way the robot rotates until it cannot see anything interfering, it then moves forward a bit and then starts listening to the navigator again. This provides us 
+The path follower is extremely basic. It determines where it is using the ekf and where it 
+needs to go from the provided destinations. This allows the robot to 
+determine whether we are facing the next goal. If not we rotate until we do and then we move 
+forward until we reach to goal location. The twist is sent through 
+a safety node which determines whether we need to stop due to an object in the way. This 
+object detection is done through laser detection. If there is something in 
+the way the robot rotates until it cannot see anything interfering, it then moves forward a 
+bit and then starts listening to the navigator again. This provides us 
 with a very simple method of navigating around objects that are in our way.

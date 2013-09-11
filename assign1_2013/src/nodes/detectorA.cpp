@@ -18,7 +18,9 @@ class ImageConverter
   image_transport::ImageTransport it_;
   image_transport::Subscriber image_sub_;
   image_transport::Publisher image_pub_;
+  ros::Subscriber laserScan;
   cv::Mat src, src_hsv, dst;
+  sensor_msgs::LaserScan scan;
   
 public:
   ImageConverter()
@@ -64,11 +66,23 @@ public:
     image_pub_.publish(dst.toImageMsg());
     
   }
+
+  void scanCallback(const sensor_msgs::LaserScan &laserscan) {
+    scan = laserscan;
+  }
+
+  // Pass angle in radians?? what is easiest
+  double getDist(float angle){
+		double increment = scan.angle_increment;
+		int pos = angle/increment;	
+		return scan.ranges[pos];
+  }
 };
 
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "image_converter");
+	laserscan = n.subscribe("/scan", 1, &scanCallback);
   ImageConverter ic;
   ros::spin();
   return 0;
