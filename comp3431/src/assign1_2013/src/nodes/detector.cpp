@@ -15,7 +15,7 @@ class ImageConverter
   image_transport::ImageTransport it_;
   image_transport::Subscriber image_sub_;
   image_transport::Publisher image_pub_;
-  cv::Mat src, src_hsv, dst;
+  cv::Mat src, proc, out;
 
 public:
   ImageConverter()
@@ -48,7 +48,17 @@ public:
       return;
     }
 
-    IplImage cvImage = src;
+    cv::cvtColor(src, proc, CV_BGR2HSV);
+    cv::blur(proc, proc, cv::Size(3, 3));
+
+    cv::inRange(proc, cv::Scalar(160, 100, 100), cv::Scalar(170, 255, 255), out);
+
+    //cv::Mat threshold_output;
+    //vector<vector<cv::Point> > contours;
+
+
+
+    /*IplImage cvImage = src;
     IplImage* cvImagePtr = &cvImage;
     /*IplImage cvImageHsv;
     cvCvtColor(cvImage, cvImageHsv, CV_BGR2HSV);
@@ -60,15 +70,14 @@ public:
     cvInRangeS(&cvImage, cvScalar(44, 100, 100), cvScalar(65, 255, 255), imgGreen);
     IplImage* imgPink = cvCreateImage(cvGetSize(&cvImage), IPL_DEPTH_8U, 1);
     cvInRangeS(&cvImage, cvScalar(160, 100, 100), cvScalar(170, 255, 255), imgPink);*/
-    detect_beacons(cvImagePtr);
+    //detect_beacons(cvImagePtr);
 
-    //dst = cv::cvarrToMat(imgYellow);
-    //cv::imshow(WINDOW, dst);
+    cv::imshow(WINDOW, out);
     cv::waitKey(3);
 
     image_pub_.publish(cv_ptr->toImageMsg());
   }
-	void detect_beacons(IplImage* cvImage){
+	/*void detect_beacons(IplImage* cvImage){
 		//color  detection
 		IplImage* frame = 0;
 		IplImage* imgThresh = 0;
@@ -83,7 +92,7 @@ public:
 		//cvSmooth(imgThresh, imgThresh, CV_GAUSSIAN,3,3);
 		cvShowImage("Found beacons", imgThresh);
 
-	}
+	}*/
 
 };
 
