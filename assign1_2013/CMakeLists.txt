@@ -70,6 +70,7 @@ include_directories(
 add_library(assign1_2013
   src/beacons.cpp
   src/path.cpp
+  src/trig.cpp
 )
 
 ## Declare a cpp executable

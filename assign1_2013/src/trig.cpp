@@ -38,7 +38,7 @@ void getOrientation(geometry_msgs::Quaternion *ret, geometry_msgs::Point *point,
 	geometry_msgs::Point left, float aLeft){
 
 	float toZero;
-	if (point->x - left->x = 0) {
+	if ((point->x - left.x) == 0) {
 		toZero = PI/2;
 	} else {
 		toZero = atan((point->y - left.y)/(point->x - left.x));
