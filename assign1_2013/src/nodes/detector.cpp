@@ -71,10 +71,15 @@ public:
     scan = laserscan;
   }
 
-  // Pass angle in radians?? what is easiest
+  // Pass angle in radians
   double getDist(float angle){
-		double increment = scan.angle_increment;
-		int pos = angle/increment;	
+		float increment = scan.angle_increment; //Get angle between range recorded
+		int pos = angle/increment + scan.ranges.size()/2; //Get the offset from angle/increment and add it to the middle
+		if (pos >= scan.ranges.size()) {
+			return scan.ranges[scan.ranges.size() -1];
+		} else if (pos < 0) {
+			return scan.ranges[0];
+		}
 		return scan.ranges[pos];
   }
 };
