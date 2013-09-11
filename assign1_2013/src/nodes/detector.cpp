@@ -75,7 +75,7 @@ public:
   double getDist(float angle){
 		double increment = scan.angle_increment;
 		int pos = angle/increment;	
-		return scan.ranges[i];
+		return scan.ranges[pos];
   }
 };
 
