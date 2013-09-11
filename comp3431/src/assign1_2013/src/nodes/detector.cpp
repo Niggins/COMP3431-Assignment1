@@ -6,6 +6,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <cv.h>
 #include <vector>
+#include <sstream>
 namespace enc = sensor_msgs::image_encodings;
 
 static const char WINDOW[] = "Image window";
@@ -53,17 +54,16 @@ public:
     }
 
     cv::cvtColor(src, proc, CV_BGR2HSV);
-    cv::blur(proc, proc, cv::Size(4, 4));
+    cv::GaussianBlur(proc, proc, cv::Size(3, 3), 0, 0);
 
     cv::Mat pinkOut, blueOut, greenOut, yellowOut, pbOut, gyOut;
     cv::inRange(proc, cv::Scalar(158, 120, 120), cv::Scalar(168, 200, 200), pinkOut);
     cv::inRange(proc, cv::Scalar(100, 127, 77), cv::Scalar(110, 192, 179), blueOut);
     cv::inRange(proc, cv::Scalar(75, 127, 35), cv::Scalar(90, 230, 110), greenOut);
-    cv::inRange(proc, cv::Scalar(23, 120, 120), cv::Scalar(30, 170, 200), yellowOut);
+    cv::inRange(proc, cv::Scalar(22, 178, 102), cv::Scalar(30, 255, 179), yellowOut);
     cv::bitwise_or(pinkOut, blueOut, pbOut);
     cv::bitwise_or(greenOut, yellowOut, gyOut);
     cv::bitwise_or(pbOut, gyOut, threshold_output);
-    threshold_output = blueOut;
 
     //setting dimensions of new images
     erosion.create(proc.rows, proc.cols, proc.type());
@@ -81,13 +81,15 @@ public:
     cv::medianBlur(erosion, erosion, 5);
     cv::dilate(erosion, threshold_output, elementRect);
 
-
+    //cv::CvFont font = cv::fontQt("Arial");
 
     cv::findContours(threshold_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
-    std::vector<cv::RotatedRect> minRect(contours.size());
+    //std::vector<cv::RotatedRect> minRect(contours.size());
+    std::vector<cv::Rect> minRect(contours.size());
     for(int i = 0; i < contours.size(); i++)
     { 
-      minRect[i] = cv::minAreaRect(cv::Mat(contours[i]));
+      minRect[i] = cv::boundingRect(cv::Mat(contours[i]));
+      minRect[i].height += 6;
     }
 
     cv::Scalar contColor = cv::Scalar(255, 0, 0);
@@ -98,10 +100,10 @@ public:
     {
       // contour
       cv::drawContours(drawing, contours, i, contColor, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point());
-      // rotated rectangle
-      cv::Point2f rect_points[4]; minRect[i].points(rect_points);
-      for(int j = 0; j < 4; j++ )
-        cv::line(drawing, rect_points[j], rect_points[(j+1)%4], recColor, 1, 8 );
+      cv::rectangle(drawing, minRect[i], recColor);
+      //cv::Point midRight(minRect[i].x + minRect[i].width, minRect[i].y);
+      //std::string width;
+      //cv::putText(drawing, std::to_string(minRect[i].width), midRight, cv::FONT_HERSHEY_SCRIPT_SIMPLEX, 2, becColor);
     }
 
     cv::imshow(WINDOW, drawing);
