@@ -12,6 +12,7 @@ the position and orientation from vo. This can then be passed to the ekf.
 The trig calculations are performed using two visible beacons, the distances & angles to each.
 From this data we can work out two possible positions using circle intersections.
 Then we can determine the actual position because we know which beacon is on the left and which is on the right.
+If only one or no beacons are visible then it will respond with the previous calculation with a higher covariance.
 
 To find its orientation using this position and the position of one beacon and its angle from the centre.
 This enables us to use trigonometry to determine the angle we are facing by determining the angle we would be facing if 

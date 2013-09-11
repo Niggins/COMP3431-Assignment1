@@ -7,6 +7,9 @@
 #include <cv.h>
 #include <sensor_msgs/LaserScan.h>
 
+//Radians offset for laser distance detection
+#define LASER_MARGIN 0.1
+
 namespace enc = sensor_msgs::image_encodings;
 
 static const char WINDOW[] = "Image window";
@@ -61,10 +64,21 @@ public:
   }
 
   // Pass angle in radians?? what is easiest
+  //Checks small subset 0.1 radians either side of assumed position of pillar to 
+  //get distance to pillar (assumed closest)
   double getDist(float angle){
     double increment = scan.angle_increment;
     int pos = angle/increment;  
-    return scan.ranges[pos];
+    int offset = LASER_MARGIN/increment;
+    double range = 9999;
+    for (int i = pos-offset; i <= pos + offset; i++){
+      if (i >= && i < scan.ranges.size()){
+        if (scan.ranges[i] < range){
+          range = scan.ranges[i];
+        }
+      }
+    }
+    return range;
   }
 private:
 	void detect_beacons(IplImage *cvImage){
