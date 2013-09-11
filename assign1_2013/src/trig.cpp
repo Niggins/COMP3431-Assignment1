@@ -7,7 +7,7 @@
 
 #define HIGH_COV 9999
 #define LOW_COV 0.01
-
+#define PI 3.1415926
 /**
  * Logic: determine intersecting points from position and distances
  * Determine which is correct one by which is on the left/right
@@ -37,7 +37,12 @@ void getPoint(geometry_msgs::Point *ret, geometry_msgs::Point left, long rLeft,
 void getOrientation(geometry_msgs::Quaternion *ret, geometry_msgs::Point *point, 
 	geometry_msgs::Point left, float aLeft){
 
-	float toZero = atan((point->y - left.y)/(point->x - left.x));
+	float toZero;
+	if (point->x - left->x = 0) {
+		toZero = PI/2;
+	} else {
+		toZero = atan((point->y - left.y)/(point->x - left.x));
+	}
 	ret->z = toZero - aLeft;
 	ret->x = ret->y = ret->w = 0.0;
 }
@@ -63,6 +68,7 @@ void getVoPose(geometry_msgs::PoseWithCovariance *ret, comp3431::Beacon *left, l
 		ret->covariance = setCovariance(HIGH_COV);
 		return;
 	}
+
 	
 	getPoint(&ret->pose.position, left->position, dLeft, right->position, dRight);
 	getOrientation(&ret->pose.orientation, &ret->pose.position, left->position, aLeft);
