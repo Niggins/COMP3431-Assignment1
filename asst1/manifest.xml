@@ -16,6 +16,7 @@
   <depend package="cv_bridge"/>
   <depend package="tf"/>
   <depend package="robot_pose_ekf"/>
+  <depend package="image_transport"/>
 
 </package>
 
