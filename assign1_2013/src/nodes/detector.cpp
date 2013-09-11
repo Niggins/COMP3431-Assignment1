@@ -4,10 +4,7 @@
 #include <sensor_msgs/image_encodings.h>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
-
-#include "geometry_msgs/Polygon.h"
-//#include "cvBlobsLib/BlobResult.h"
-
+#include <cv.h>
 namespace enc = sensor_msgs::image_encodings;
 
 static const char WINDOW[] = "Image window";
@@ -18,10 +15,7 @@ class ImageConverter
   image_transport::ImageTransport it_;
   image_transport::Subscriber image_sub_;
   image_transport::Publisher image_pub_;
-  ros::Subscriber laserScan;
-  cv::Mat src, src_hsv, dst;
-  sensor_msgs::LaserScan scan;
-  
+
 public:
   ImageConverter()
     : it_(nh_)
@@ -43,6 +37,7 @@ public:
     try
     {
       cv_ptr = cv_bridge::toCvCopy(msg, enc::BGR8);
+      IplImage *cvImage = cv_ptr;
     }
     catch (cv_bridge::Exception& e)
     {
@@ -50,40 +45,39 @@ public:
       return;
     }
 
-    src = cv_ptr->image.clone();
-    cv::cvtColor(src, src_hsv, CV_BGR2HSV);
+    detect_beacons(cvImage);
 
-    cvInRangeS(src.image, cvScalar(20, 100, 100), cvScalar(30, 255, 255), dst.image);
-    //threshold( src_hsv, dst, cvScalar(20, 100, 100), max_BINARY_value,threshold_type );
-    
-
-    if (cv_ptr->image.rows > 60 && cv_ptr->image.cols > 60)
-      cv::circle(cv_ptr->image, cv::Point(50, 50), 10, CV_RGB(255,0,0));
-
-    cv::imshow(WINDOW, dst.image);
+    cv::imshow(WINDOW, cv_ptr->image);
     cv::waitKey(3);
-    
-    image_pub_.publish(dst.toImageMsg());
-    
-  }
 
-  void scanCallback(const sensor_msgs::LaserScan &laserscan) {
-    scan = laserscan;
+    image_pub_.publish(cv_ptr->toImageMsg());
   }
+private:
+	void detect_beacons(IplImage *cvImage){
+		//color  detection
+		IplImage *frame = 0;
+		IplImage* imgThresh = 0;
+		frame = cvCloneImage(cvImage);
+		cvSmooth(frame, frame, CV_GAUSSIAN,3,3);
 
-  // Pass angle in radians?? what is easiest
-  double getDist(float angle){
-		double increment = scan.angle_increment;
-		int pos = angle/increment;	
-		return scan.ranges[pos];
-  }
+		IplImage* imgHSV = cvCreateImage(cvGetSize(frame), IPL_DEPTH_8U, 3);
+		cvCvtColor(frame, imgHSV, CV_BGR2HSV);
+
+		imgThresh=cvCreateImage(cvGetSize(imgHSV),IPL_DEPTH_8U, 1);
+		cvInRangeS(imgHSV, cvScalar(212,160,60), cvScalar(227,255,255), imgThresh);
+		cvSmooth(imgThresh, imgThresh, CV_GAUSSIAN,3,3);
+		cvShowImage("Found beacons", imgThresh);
+
+	}
+
 };
 
 int main(int argc, char** argv)
 {
+  cvNamedWindow("Found beacons");
   ros::init(argc, argv, "image_converter");
-	laserscan = n.subscribe("/scan", 1, &scanCallback);
   ImageConverter ic;
   ros::spin();
+  cvDestroyWindow("Found beacons");
   return 0;
 }
