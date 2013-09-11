@@ -34,10 +34,11 @@ public:
   void imageCb(const sensor_msgs::ImageConstPtr& msg)
   {
     cv_bridge::CvImagePtr cv_ptr;
+    IplImage *cvImage = NULL;
     try
     {
       cv_ptr = cv_bridge::toCvCopy(msg, enc::BGR8);
-      IplImage *cvImage = cv_ptr;
+      cvImage = cv_ptr;
     }
     catch (cv_bridge::Exception& e)
     {
