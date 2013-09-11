@@ -5,6 +5,8 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <cv.h>
+#include <sensor_msgs/LaserScan.h>
+
 namespace enc = sensor_msgs::image_encodings;
 
 static const char WINDOW[] = "Image window";
@@ -23,6 +25,7 @@ public:
   {
     image_pub_ = it_.advertise("out", 1);
     image_sub_ = it_.subscribe("in", 1, &ImageConverter::imageCb, this);
+    laserScan = nh_.subscribe("/scan", 1, &scanCallback);
 
     cv::namedWindow(WINDOW);
   }
@@ -88,7 +91,6 @@ int main(int argc, char** argv)
   cvNamedWindow("Found beacons");
   ros::init(argc, argv, "image_converter");
   ImageConverter ic;
-  laserscan = n.subscribe("/scan", 1, &scanCallback);
   ros::spin();
   cvDestroyWindow("Found beacons");
   return 0;

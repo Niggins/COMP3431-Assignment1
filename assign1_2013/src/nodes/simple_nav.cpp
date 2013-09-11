@@ -10,7 +10,7 @@
 
 //Check Numbers
 #define POS_THRESHOLD 0.5
-#define COV_THRESHOLD 50
+#define COV_THRESHOLD 0.5
 #define TURN_SPEED 0.3
 #define FORWARD_SPEED 0.3
 #define SPIN_SEARCH_SPEED 0.2
