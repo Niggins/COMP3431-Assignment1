@@ -25,8 +25,8 @@ void getPoint(geometry_msgs::Point *ret, geometry_msgs::Point left, long rLeft,
 	pointI.x = left.x + (a*(right.x - left.x)/d);
 	pointI.y = left.y + (a*(right.y - left.y)/d);
 
-	ret->x = pointI.x + h*(right.x - left.x)/d;
-	ret->y = pointI.y - h*(right.y - left.y)/d;
+	ret->x = pointI.x - h*(right.x - left.x)/d;
+	ret->y = pointI.y + h*(right.y - left.y)/d;
 	ret->z = 0;
 }
 
