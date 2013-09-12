@@ -98,7 +98,7 @@ public:
       std::vector<cv::Rect> minRect(contours.size());
       for(int i = 0; i < contours.size(); i++)
       { 
-        minRect[i] = cv::boundingRect(cv::Mat(contours[i]));
+        minRect[i] = cv::boundingRect(cv::Mat(contours[i]));;
         minRect[i].height += 7;
 
         if (k == 0)
@@ -109,13 +109,30 @@ public:
         {
           for (int a = 0; a < pinkRect.size(); a++)
           {
-            if ((pinkRect[a] & minRect[i]).area() && (k == 1))
+            if ((pinkRect[a] & minRect[i]).area())
             {
               cv::Point circ;
-              if (pinkRect[a].y > minRect[i].y)
-                circ = cv::Point(pinkRect[a].x, pinkRect[a].y);
+              if (k == 1)
+              {
+                if (pinkRect[a].y > minRect[i].y)
+                  circ = cv::Point(pinkRect[a].x, pinkRect[a].y);
+                else
+                  circ = cv::Point(minRect[i].x + minRect[i].width, minRect[i].y);
+              }
+              else if (k == 2)
+              {
+                if (pinkRect[a].y > minRect[i].y)
+                  circ = cv::Point(pinkRect[a].x, pinkRect[a].y);
+                else
+                  circ = cv::Point(minRect[i].x + minRect[i].width, minRect[i].y);
+              }
               else
-                circ = cv::Point(minRect[i].x, minRect[i].y);
+              {
+                if (pinkRect[a].y > minRect[i].y)
+                  circ = cv::Point(pinkRect[a].x, pinkRect[a].y);
+                else
+                  circ = cv::Point(minRect[i].x + minRect[i].width, minRect[i].y);
+              }
               cv::circle(colorOut[k], circ, 3, cv::Scalar(255, 0, 0), -1);
             }
           }
@@ -137,8 +154,6 @@ public:
 
     cv::imshow(WINDOW, threshold_output);
     cv::waitKey(3);
-
-    image_pub_.publish(cv_ptr->toImageMsg());
   }
 };
 
