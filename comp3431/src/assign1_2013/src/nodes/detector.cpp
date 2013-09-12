@@ -56,24 +56,22 @@ public:
     cv::cvtColor(src, proc, CV_BGR2HSV);
     cv::GaussianBlur(proc, proc, cv::Size(3, 3), 0, 0);
 
-    cv::Mat colorOut[4], combOut[2];
+    cv::Mat colorOut[4], combOut[2], coloredLayers[4];
     cv::Scalar boxColor[4];
     // Pink Layer
     cv::inRange(proc, cv::Scalar(158, 120, 120), cv::Scalar(168, 200, 200), colorOut[0]);
-    boxColor[0] = cv::Scalar(255, 20, 147);
+    //boxColor[0] = cv::Scalar(160, 230, 255);
+    boxColor[0] = cv::Scalar(127, 0, 255);
     // Blue Layer
     cv::inRange(proc, cv::Scalar(100, 127, 77), cv::Scalar(110, 192, 179), colorOut[1]);
-    boxColor[1] = cv::Scalar(0, 0, 255);
+    boxColor[1] = cv::Scalar(255, 0, 0);
     // Green layer
     cv::inRange(proc, cv::Scalar(75, 127, 35), cv::Scalar(90, 230, 110), colorOut[2]);
     boxColor[2] = cv::Scalar(0, 255, 0);
     // Yellow layer
     cv::inRange(proc, cv::Scalar(22, 178, 102), cv::Scalar(30, 255, 179), colorOut[3]);
-    boxColor[3] = cv::Scalar(255, 255, 0);
+    boxColor[3] = cv::Scalar(0, 255, 255);
     cv::String name[4] = {"Pink", "Blue", "Green", "Yellow"};
-    /*cv::bitwise_or(colorOut[0], colorOut[1], combOut[0]);
-    cv::bitwise_or(colorOut[2], colorOut[3], combOut[1]);
-    cv::bitwise_or(combOut[0], combOut[1], threshold_output);*/
 
     //setting dimensions of new images
     erosion.create(proc.rows, proc.cols, proc.type());
@@ -96,6 +94,7 @@ public:
 
       cv::findContours(colorOut[k], contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
       std::vector<cv::Rect> minRect(contours.size());
+      coloredLayers[k] = cv::Mat::zeros(colorOut[k].size(), CV_8UC3);
       for(int i = 0; i < contours.size(); i++)
       { 
         minRect[i] = cv::boundingRect(cv::Mat(contours[i]));;
@@ -114,46 +113,59 @@ public:
               cv::Point circ;
               if (k == 1)
               {
-                if (pinkRect[a].y > minRect[i].y)
-                  circ = cv::Point(pinkRect[a].x, pinkRect[a].y);
+                if (pinkRect[a].y < minRect[i].y)
+                  circ = calcRectMid(pinkRect[a], minRect[i]);
                 else
-                  circ = cv::Point(minRect[i].x + minRect[i].width, minRect[i].y);
+                  circ = calcRectMid(minRect[i], pinkRect[a]);
               }
               else if (k == 2)
               {
-                if (pinkRect[a].y > minRect[i].y)
-                  circ = cv::Point(pinkRect[a].x, pinkRect[a].y);
+                if (pinkRect[a].y < minRect[i].y)
+                  circ = calcRectMid(pinkRect[a], minRect[i]);
                 else
-                  circ = cv::Point(minRect[i].x + minRect[i].width, minRect[i].y);
+                  circ = calcRectMid(minRect[i], pinkRect[a]);
               }
               else
               {
-                if (pinkRect[a].y > minRect[i].y)
-                  circ = cv::Point(pinkRect[a].x, pinkRect[a].y);
+                if (pinkRect[a].y < minRect[i].y)
+                  circ = calcRectMid(pinkRect[a], minRect[i]);
                 else
-                  circ = cv::Point(minRect[i].x + minRect[i].width, minRect[i].y);
+                  circ = calcRectMid(minRect[i], pinkRect[a]);
               }
-              cv::circle(colorOut[k], circ, 3, cv::Scalar(255, 0, 0), -1);
+              cv::circle(coloredLayers[k], circ, 3, cv::Scalar(0, 0, 255), -1);
             }
           }
         }
       }
 
-      drawing = cv::Mat::zeros(colorOut[k].size(), CV_8UC3);
       for(int i = 0; i < contours.size(); i++ )
       {
         // contour
-        //cv::drawContours(drawing, contours, i, contColor, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point());
-        cv::rectangle(colorOut[k], minRect[i], boxColor[k]);
+        //cv::drawContours(drawing, contours, i, boxColor[k], 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point());
+        cv::rectangle(coloredLayers[k], minRect[i], boxColor[k]);
       }
+      //cv::imshow(name[k], coloredLayers[k]);
     }
 
-    cv::bitwise_or(colorOut[0], colorOut[1], combOut[0]);
+    /*cv::bitwise_or(colorOut[0], colorOut[1], combOut[0]);
     cv::bitwise_or(colorOut[2], colorOut[3], combOut[1]);
+    cv::bitwise_or(combOut[0], combOut[1], threshold_output);*/
+
+    cv::bitwise_or(coloredLayers[0], coloredLayers[1], combOut[0]);
+    cv::bitwise_or(coloredLayers[2], coloredLayers[3], combOut[1]);
     cv::bitwise_or(combOut[0], combOut[1], threshold_output);
 
     cv::imshow(WINDOW, threshold_output);
     cv::waitKey(3);
+  }
+
+  cv::Point calcRectMid(cv::Rect const& topRect, cv::Rect const& botRect)
+  {
+    float mid, topMid, botMid;
+    topMid = topRect.x + topRect.width/2;
+    botMid = botRect.x + botRect.width/2;
+    mid = (topMid + botMid)/2;
+    return cv::Point(mid, botRect.y);
   }
 };
 
