@@ -7,6 +7,15 @@
 
 #include <geometry_msgs/PoseWithCovariance.h>
 #include <assign1_2013/beacons.h>
+struct SpottedBeacon {
+public:
+	SpottedBeacon() {beacon = NULL;}
+	void set(SpottedBeacon b) {beacon = b.beacon; distance = b.distance; angle = b.angle;}
+	comp3431::Beacon *beacon;
+	double distance;
+	float angle;
+};
+
 class trig {
 private:
 	geometry_msgs::PoseWithCovariance prev;
@@ -19,6 +28,5 @@ private:
 
 	public:
 		trig();
-		void getVoPose(geometry_msgs::PoseWithCovariance *ret, comp3431::Beacon *left, long dLeft, float aLeft,
-	comp3431::Beacon *right, long dRight, float aRight);
+		void getVoPose(geometry_msgs::PoseWithCovariance *ret, SpottedBeacon left, SpottedBeacon right);
 };

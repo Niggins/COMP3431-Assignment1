@@ -39,6 +39,8 @@ class ImageConverter
   sensor_msgs::LaserScan scan;
 	nav_msgs::Odometry odomMsg;
 	trig trig_;
+	comp3431::Beacons beacons;
+	std::string beaconColors[4];	
 
 public:
   ImageConverter()
@@ -48,8 +50,8 @@ public:
     image_sub_ = it_.subscribe("in", 1, &ImageConverter::imageCb, this);
     laserScan = nh_.subscribe("/scan", 1, &ImageConverter::scanCallback, this);
 		vo = nh_.advertise<nav_msgs::Odometry>("/vo", 1);
-		odomMsg.header.frame_id = "/camera_depth_frame";
-		odomMsg.child_frame_id = "/base_frame";						//CHECK THESE!!!!!!!!
+		odomMsg.header.frame_id = "/camera_rgb_frame";
+		odomMsg.child_frame_id = "/base_link";						//CHECK THESE!!!!!!!!
 		odomMsg.twist.twist.linear.x = odomMsg.twist.twist.linear.y = odomMsg.twist.twist.linear.z = 0;
 		odomMsg.twist.twist.angular.x = odomMsg.twist.twist.angular.y = odomMsg.twist.twist.angular.z = 0;
 		boost::array<double, 36ul> tmp =  	{{HIGH_COV    , 0, 0, 0, 0, 0,
@@ -59,7 +61,11 @@ public:
 										  										0, 0, 0, 0,     HIGH_COV, 0,
 										  										0, 0, 0, 0, 0,  	HIGH_COV}};
 		odomMsg.twist.covariance = tmp;
-
+    beaconColors[0] = "pink";
+    beaconColors[1] = "blue";
+    beaconColors[2] = "green";
+    beaconColors[3] = "yellow";
+    
     cv::namedWindow(WINDOW);
   }
 
@@ -71,6 +77,9 @@ public:
   void imageCb(const sensor_msgs::ImageConstPtr& msg)
   {
 		odomMsg.header.stamp = ros::Time::now();
+		long imageWidth = msg->width;
+		std::vector< SpottedBeacon > spottedBeacons;
+		bool pinkTop = false;
     cv_bridge::CvImagePtr cv_ptr;
     try
     {
@@ -143,32 +152,39 @@ public:
             if ((pinkRect[a] & minRect[i]).area())
             {
               cv::Point circ;
-              if (k == 1)
-              {
-                if (pinkRect[a].y > minRect[i].y)
-                  circ = cv::Point(pinkRect[a].x, pinkRect[a].y);
-                else
-                  circ = cv::Point(minRect[i].x + minRect[i].width, minRect[i].y);
-              }
-              else if (k == 2)
-              {
-                if (pinkRect[a].y > minRect[i].y)
-                  circ = cv::Point(pinkRect[a].x, pinkRect[a].y);
-                else
-                  circ = cv::Point(minRect[i].x + minRect[i].width, minRect[i].y);
-              }
-              else
-              {
-                if (pinkRect[a].y > minRect[i].y)
-                  circ = cv::Point(pinkRect[a].x, pinkRect[a].y);
-                else
-                  circ = cv::Point(minRect[i].x + minRect[i].width, minRect[i].y);
-              }
+						
+						  if (pinkRect[a].y > minRect[i].y) {
+						    circ = cv::Point(pinkRect[a].x, pinkRect[a].y);
+								pinkTop = true;
+						  } else {
+						    circ = cv::Point(minRect[i].x + minRect[i].width, minRect[i].y);
+								pinkTop = false;								
+							}
+							//Add to spotted beacon list
+							SpottedBeacon spotted;
+							spotted.distance = minRect[i].x + minRect[i].width/2;
+							for (int j = 0; j < beacons.beacons.size(); j++) {
+								if (pinkTop) {
+									if (!beacons.beacons[j].top.compare(beaconColors[0]) && !beacons.beacons[j].bottom.compare(beaconColors[k])){
+										spotted.beacon = &beacons.beacons[j];							
+										break;																			
+								  }
+								} else {
+									if (!beacons.beacons[j].top.compare(beaconColors[k]) && !beacons.beacons[j].bottom.compare(beaconColors[0])){
+										spotted.beacon = &beacons.beacons[j];							
+										break;	
+									}
+								}
+							}
+							ROS_INFO("Spotted Beacon %s:%s", spotted.beacon->top.c_str(), spotted.beacon->bottom.c_str());
+							spottedBeacons.push_back(spotted);
               cv::circle(colorOut[k], circ, 3, cv::Scalar(255, 0, 0), -1);
             }
           }
         }
       }
+
+			publish(spottedBeacons, imageWidth);
 
       drawing = cv::Mat::zeros(colorOut[k].size(), CV_8UC3);
       for(int i = 0; i < contours.size(); i++ )
@@ -207,21 +223,39 @@ public:
         }
       }
     }
+    ROS_INFO("Distance %d", range);
     return range;
   }
 
-	float getAngle(double pos, double imageWidth){
+	float getAngle(double pos, long imageWidth){
 		double halfIm = imageWidth/2;
 		float angle = (pos-halfIm)*(CAM_WIDTH/2)/(halfIm);
+    ROS_INFO("Distance %f", angle);
 		return angle;
 	}
 	
 	//Pass in beacon structs and their centre position in the image
-  void publish(comp3431::Beacon *left, double centerL, comp3431::Beacon *right, double centerR, double imageWidth){
+  void publish(std::vector <SpottedBeacon> spottedBeacons, long imageWidth){
+    ROS_INFO("PUBLISHING VO!!!!!!!!!!!");
 		odomMsg.header.seq++;
-		float aLeft = getAngle(centerL, imageWidth);
-		float aRight = getAngle(centerR, imageWidth);
-		trig_.getVoPose(&odomMsg.pose, left, getDist(aLeft), aLeft, right, getDist(aRight), aRight);
+		SpottedBeacon left;
+		SpottedBeacon right;
+		for (std::vector<SpottedBeacon>::iterator it = spottedBeacons.begin(); it != spottedBeacons.end(); it++){
+			//distance is temporarily used to describe distance from edge of image
+			it->angle = getAngle(it->distance, imageWidth);
+			it->distance = getDist(it->angle);
+			if (left.beacon == NULL) {
+				left.set(*it);
+			} else {
+				if (left.distance < it->distance) {
+					right.set(*it);
+				} else {
+					right.set(left);
+					left.set(*it);
+				}
+			}
+		}
+		trig_.getVoPose(&odomMsg.pose, left, right);
 		vo.publish(odomMsg);
   }
 };

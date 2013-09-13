@@ -45,7 +45,7 @@
 		} else {
 			toZero = atan((point->y - left.y)/(point->x - left.x));
 		}
-		ret->z = toZero - aLeft;
+		ret->z = toZero + aLeft;
 		ret->x = ret->y = ret->w = 0.0;
 	}
 
@@ -78,9 +78,8 @@
 		prev.pose.orientation.x = prev.pose.orientation.y = prev.pose.orientation.z = 0;
 	}
 
-	void trig::getVoPose(geometry_msgs::PoseWithCovariance *ret, comp3431::Beacon *left, long dLeft, float aLeft,
-	comp3431::Beacon *right, long dRight, float aRight){
-		if (left == NULL || right == NULL){
+	void trig::getVoPose(geometry_msgs::PoseWithCovariance *ret, SpottedBeacon left, SpottedBeacon right){
+		if (left.beacon == NULL || right.beacon == NULL){
 			//Cannot be certain about the position or orientation
 			//Increase since last response
 			ret->pose.position = prev.pose.position;
@@ -89,8 +88,8 @@
 			return;
 		}
 
-		getPoint(&ret->pose.position, left->position, dLeft, right->position, dRight);
-		getOrientation(&ret->pose.orientation, &ret->pose.position, left->position, aLeft);
+		getPoint(&ret->pose.position, left.beacon->position, left.distance, right.beacon->position, right.distance);
+		getOrientation(&ret->pose.orientation, &ret->pose.position, left.beacon->position, left.angle);
 		ret->covariance = setCovariance(LOW_COV);
 
 		prev.pose.position = ret->pose.position;
