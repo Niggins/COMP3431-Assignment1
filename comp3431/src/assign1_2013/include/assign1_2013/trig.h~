@@ -10,7 +10,7 @@
 struct SpottedBeacon {
 public:
 	SpottedBeacon() {beacon = NULL;}
-	void set(SpottedBeacon b) {beacon = b.beacon; distance = b.distance; angle = b.angle;}
+	set(SpottedBeacon b) {beacon = b.beacon; distance = b.distance; angle = b.angle;}
 	comp3431::Beacon *beacon;
 	double distance;
 	float angle;

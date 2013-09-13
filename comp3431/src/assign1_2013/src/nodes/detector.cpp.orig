@@ -39,7 +39,7 @@ class ImageConverter
   sensor_msgs::LaserScan scan;
 	nav_msgs::Odometry odomMsg;
 	trig trig_;
-	comp3431::Beacons beaconList;
+	comp3431::Beacons beacons;
 	std::string beaconColors[4];	
 
 public:
@@ -149,40 +149,91 @@ public:
         // If the current color is not pink, iterate through the pink rectangles
         else
         {
-          for (int a = 0; a < pinkRect.size(); a++) {
+          for (int a = 0; a < pinkRect.size(); a++)
+          {
             // Checks if a pink rectangle intersects the current colored rectangle
             if ((pinkRect[a] & minRect[i]).area())
             {
+<<<<<<< HEAD
               cv::Point center;
-              SpottedBeacon spotted;
               // Checks if pink rectangle is on top
               if (pinkRect[a].y < minRect[i].y)
               {
                 center = calcRectMid(pinkRect[a], minRect[i]);
-                spotted.beacon = &beaconList.getBeacon(beaconColors[0], beaconColors[k]);
+                if (k == 1)
+                {
+
+                }
+                if (k == 2)
+                {
+
+                }
+                if (k == 3)
+                {
+
+                }
               }
               // Otherwise pink rectangle is on the bottom
               else
               {
                 center = calcRectMid(minRect[i], pinkRect[a]);
-                spotted.beacon = &beaconList.getBeacon(beaconColors[k], beaconColors[0]);
+                if (k == 1)
+                {
+
+                }
+                if (k == 2)
+                {
+
+                }
+                if (k == 3)
+                {
+                  
+                }
               }
               // Draw a red dot at the center point of the 2 rectangles
               cv::circle(coloredLayer[k], center, 3, cv::Scalar(0, 0, 255), -1);
+=======
+              cv::Point circ;
+						
+						  if (pinkRect[a].y > minRect[i].y) {
+						    circ = cv::Point(pinkRect[a].x, pinkRect[a].y);
+								pinkTop = true;
+						  } else {
+						    circ = cv::Point(minRect[i].x + minRect[i].width, minRect[i].y);
+								pinkTop = false;								
+							}
 							//Add to spotted beacon list
-              spotted.distance = center.x;
+							SpottedBeacon spotted;
+							spotted.distance = minRect[i].x + minRect[i].width/2;
+							for (int j = 0; j < beacons.beacons.size(); j++) {
+								if (pinkTop) {
+									if (!beacons.beacons[j].top.compare(beaconColors[0]) && !beacons.beacons[j].bottom.compare(beaconColors[k])){
+										spotted.beacon = &beacons.beacons[j];							
+										break;																			
+								  }
+								} else {
+									if (!beacons.beacons[j].top.compare(beaconColors[k]) && !beacons.beacons[j].bottom.compare(beaconColors[0])){
+										spotted.beacon = &beacons.beacons[j];							
+										break;	
+									}
+								}
+							}
 							ROS_INFO("Spotted Beacon %s:%s", spotted.beacon->top.c_str(), spotted.beacon->bottom.c_str());
 							spottedBeacons.push_back(spotted);
               cv::circle(colorOut[k], circ, 3, cv::Scalar(255, 0, 0), -1);
+>>>>>>> f4b112746369ed59a830d266fb9222c155857f11
             }
           }
         }
       }
 
+<<<<<<< HEAD
+      // Draw bounding rectangles the same color as the color contour
+=======
 			publish(spottedBeacons, imageWidth);
 
       drawing = cv::Mat::zeros(colorOut[k].size(), CV_8UC3);
-      // Draw bounding rectangles the same color as the color contour
+>>>>>>> f4b112746369ed59a830d266fb9222c155857f11
       for(int i = 0; i < contours.size(); i++ )
       {
         cv::rectangle(coloredLayer[k], minRect[i], boxColor[k]);
@@ -197,6 +248,7 @@ public:
     cv::waitKey(3);
   }
 
+<<<<<<< HEAD
   cv::Point calcRectMid(cv::Rect const& topRect, cv::Rect const& botRect)
   {
     float mid, topMid, botMid;
@@ -204,7 +256,7 @@ public:
     botMid = botRect.x + botRect.width/2;
     mid = (topMid + botMid)/2;
     return cv::Point(mid, botRect.y);
-  }
+=======
 
   void scanCallback(const sensor_msgs::LaserScan &laserscan) {
     scan = laserscan;
@@ -213,7 +265,7 @@ public:
   // Pass angle in radians?? what is easiest
   //Checks small subset 0.1 radians either side of assumed position of pillar to
   //get distance to pillar (assumed closest)
-  double getDist(float angle) {
+  double getDist(float angle){
     double increment = scan.angle_increment;
     int pos = angle/increment;
     int offset = LASER_MARGIN/increment;
@@ -259,6 +311,7 @@ public:
 		}
 		trig_.getVoPose(&odomMsg.pose, left, right);
 		vo.publish(odomMsg);
+>>>>>>> f4b112746369ed59a830d266fb9222c155857f11
   }
 };
 

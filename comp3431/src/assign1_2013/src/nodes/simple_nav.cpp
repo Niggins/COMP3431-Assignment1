@@ -102,8 +102,9 @@ public:
     ros::NodeHandle nh;
     geomPub = nh.advertise<geometry_msgs::Twist>("unsafe_cmd_vel", 1);
     posSub = nh.subscribe("robot_pose_ekf/odom_combined", 1, &simple_nav::posCallback, this);
-    cmd.linear.x = FORWARD_SPEED;
-    cmd.linear.y = cmd.angular.z = 0.0;
+    cmd.linear.x = 0.0;
+    cmd.linear.y = 0.0;
+    cmd.angular.z = TURN_SPEED;
   }
 
   void publish(){

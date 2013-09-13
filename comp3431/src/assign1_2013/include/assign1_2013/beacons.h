@@ -25,9 +25,10 @@ public:
 
 class Beacons {
 public:
-	std::vector< Beacon > beacons;
+	std::vector<Beacon> beacons;
 
 	Beacons();
+	Beacon getBeacon(std::string const& topColor, std::string const& botColor);
 };
 
 } // namespace comp3431

@@ -42,4 +42,11 @@ Beacons::Beacons() {
 	}
 }
 
+Beacons::getBeacon(std::string const& topColor, std::string const& botColor) {
+	for (int i = 0; i < beacons.size(); i++) {
+		if (beacons[i].top.compare(topColor) && beacons[i].bottom.compare(botColor))
+			return beacons[i];
+	}
+}
+
 } // namespace comp3431
