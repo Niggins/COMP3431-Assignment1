@@ -159,13 +159,13 @@ public:
               if (pinkRect[a].y < minRect[i].y)
               {
                 center = calcRectMid(pinkRect[a], minRect[i]);
-                spotted.beacon = &beaconList.getBeacon(beaconColors[0], beaconColors[k]);
+                spotted.beacon = beaconList.getBeacon(beaconColors[0], beaconColors[k]);
               }
               // Otherwise pink rectangle is on the bottom
               else
               {
                 center = calcRectMid(minRect[i], pinkRect[a]);
-                spotted.beacon = &beaconList.getBeacon(beaconColors[k], beaconColors[0]);
+                spotted.beacon = beaconList.getBeacon(beaconColors[k], beaconColors[0]);
               }
               // Draw a red dot at the center point of the 2 rectangles
               cv::circle(coloredLayer[k], center, 3, cv::Scalar(0, 0, 255), -1);
@@ -173,7 +173,6 @@ public:
               spotted.distance = center.x;
 							ROS_INFO("Spotted Beacon %s:%s", spotted.beacon->top.c_str(), spotted.beacon->bottom.c_str());
 							spottedBeacons.push_back(spotted);
-              cv::circle(colorOut[k], circ, 3, cv::Scalar(255, 0, 0), -1);
             }
           }
         }
@@ -181,7 +180,6 @@ public:
 
 			publish(spottedBeacons, imageWidth);
 
-      drawing = cv::Mat::zeros(colorOut[k].size(), CV_8UC3);
       // Draw bounding rectangles the same color as the color contour
       for(int i = 0; i < contours.size(); i++ )
       {

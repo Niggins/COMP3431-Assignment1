@@ -2,12 +2,12 @@
 	<include file="$(find assign1_2013)/launch/beacons/trial.launch" />
 	<include file="$(find assign1_2013)/launch/path.launch" />
 	
-    <!node pkg="assign1_2013" type="visual" name="field" output="screen" >
+    <node pkg="assign1_2013" type="visual" name="field" output="screen" >
     </node>
 	<node pkg="assign1_2013" type="simple_nav" name="simple_nav" output="screen">
     </node>
-   	<node pkg="assign1_2013" type="safety_first" name="safety_first" output="screen">
-    </node>
+   	<!--node pkg="assign1_2013" type="safety_first" name="safety_first" output="screen">
+    </node-->
     <node pkg="assign1_2013" type="detector" name="image_converter" output="screen">
     	<remap from="in" to="/camera/rgb/image_color" />
     </node>
@@ -23,6 +23,7 @@
 	    <param name="debug" value="false"/>
 	    <param name="self_diagnose" value="false"/>
 	    <param name="pub_odometry" value="true"/>
+	    <remap from="vo" to="camera_rgb_optical_frame"/>
 	</node>
 
     <node pkg="image_view" type="image_view" name="field_view" />
