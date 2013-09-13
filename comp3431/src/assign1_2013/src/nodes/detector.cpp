@@ -11,6 +11,8 @@
 #include <nav_msgs/Odometry.h>
 #include <assign1_2013/beacons.h>
 #include <assign1_2013/trig.h>
+#include <tf/transform_listener.h>
+#include <tf/transform_broadcaster.h>
 
 //Radians offset for laser distance detection
 #define LASER_MARGIN 0.1
@@ -49,7 +51,8 @@ public:
     image_pub_ = it_.advertise("out", 1);
     image_sub_ = it_.subscribe("in", 1, &ImageConverter::imageCb, this);
     laserScan = nh_.subscribe("/scan", 1, &ImageConverter::scanCallback, this);
-    odomMsg.child_frame_id = "vo";
+    odomMsg.child_frame_id = "base_footprint";
+    odomMsg.header.frame_id = "odom_combined";
 		vo = nh_.advertise<nav_msgs::Odometry>("/vo", 1);
 		odomMsg.twist.twist.linear.x = odomMsg.twist.twist.linear.y = odomMsg.twist.twist.linear.z = 0;
 		odomMsg.twist.twist.angular.x = odomMsg.twist.twist.angular.y = odomMsg.twist.twist.angular.z = 0;
@@ -75,7 +78,6 @@ public:
 
   void imageCb(const sensor_msgs::ImageConstPtr& msg)
   {
-    odomMsg.header.frame_id = msg->header.frame_id;
 		odomMsg.header.stamp = ros::Time::now();
 		long imageWidth = msg->width;
 		std::vector< SpottedBeacon > spottedBeacons;
@@ -223,7 +225,7 @@ public:
         }
       }
     }
-    ROS_INFO("Distance %d", range);
+    ROS_INFO("Distance %a", range);
     return range;
   }
 
@@ -256,6 +258,7 @@ public:
 			}
 		}
 		trig_.getVoPose(&odomMsg.pose, left, right);
+		ROS_INFO("Pose x: %a, y:%a z:%a", odomMsg.pose.pose.position.x, odomMsg.pose.pose.position.y, odomMsg.pose.pose.position.z);
 		vo.publish(odomMsg);
   }
 };
@@ -265,5 +268,29 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "image_converter");
   ImageConverter ic;
   ros::spin();
+  /*int32_t publish_rate_ = 10;
+  tf::TransformBroadcaster tf_br_;
+  tf::StampedTransform transform;
+  tf::TransformListener listener;
+
+  // set up parent and child frames
+  transform.frame_id_ = std::string("/base_footprint");
+  transform.child_frame_id_ = std::string("/vo");
+
+  // set up publish rate
+  ros::Rate loop_rate(publish_rate_);
+
+  // main loop
+  while (ros::ok()) {
+    try {  
+      listener.lookupTransform("/camera_rgb_frame", "/base_footprint", ros::Time::now(), transform);
+      transform.child_frame_id_ = std::string("/vo");
+      tf_br_.sendTransform(transform);
+    } catch (...){ 
+      ROS_INFO("Failed to find frame");
+    }
+    ros::spinOnce();
+    loop_rate.sleep();
+  }*/
   return 0;
 }

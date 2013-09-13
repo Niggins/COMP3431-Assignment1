@@ -23,7 +23,7 @@
 	    <param name="debug" value="false"/>
 	    <param name="self_diagnose" value="false"/>
 	    <param name="pub_odometry" value="true"/>
-	    <remap from="vo" to="camera_rgb_optical_frame"/>
+	    <!--remap from="vo" to="camera_rgb_optical_frame"/-->
 	</node>
 
     <node pkg="image_view" type="image_view" name="field_view" />

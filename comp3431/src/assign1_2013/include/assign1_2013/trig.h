@@ -21,10 +21,11 @@ private:
 	geometry_msgs::PoseWithCovariance prev;
 	void getPoint(geometry_msgs::Point *ret, geometry_msgs::Point left, long rLeft,
 	geometry_msgs::Point right, long rRight);
+	void getSinglePoint(geometry_msgs::Point *ret, geometry_msgs::Point left, long rLeft);
 	void getOrientation(geometry_msgs::Quaternion *ret, geometry_msgs::Point *point,
 	geometry_msgs::Point left, float aLeft);
 	boost::array<double, 36ul> setCovariance(double val);
-	boost::array<double, 36ul> increaseCov(boost::array<double, 36ul> prev);
+	boost::array<double, 36ul> increaseCov(boost::array<double, 36ul> prev, long inc);
 
 	public:
 		trig();
