@@ -49,9 +49,8 @@ public:
     image_pub_ = it_.advertise("out", 1);
     image_sub_ = it_.subscribe("in", 1, &ImageConverter::imageCb, this);
     laserScan = nh_.subscribe("/scan", 1, &ImageConverter::scanCallback, this);
+    odomMsg.child_frame_id = "vo";
 		vo = nh_.advertise<nav_msgs::Odometry>("/vo", 1);
-		odomMsg.header.frame_id = "/camera_rgb_frame";
-		odomMsg.child_frame_id = "/base_link";						//CHECK THESE!!!!!!!!
 		odomMsg.twist.twist.linear.x = odomMsg.twist.twist.linear.y = odomMsg.twist.twist.linear.z = 0;
 		odomMsg.twist.twist.angular.x = odomMsg.twist.twist.angular.y = odomMsg.twist.twist.angular.z = 0;
 		boost::array<double, 36ul> tmp =  	{{HIGH_COV    , 0, 0, 0, 0, 0,
@@ -76,6 +75,7 @@ public:
 
   void imageCb(const sensor_msgs::ImageConstPtr& msg)
   {
+    odomMsg.header.frame_id = msg->header.frame_id;
 		odomMsg.header.stamp = ros::Time::now();
 		long imageWidth = msg->width;
 		std::vector< SpottedBeacon > spottedBeacons;
