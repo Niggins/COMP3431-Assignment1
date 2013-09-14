@@ -7,7 +7,6 @@
 #include <cv.h>
 #include <sensor_msgs/LaserScan.h>
 
-//Radians offset for laser distance detection
 #define LASER_MARGIN 0.1
 
 namespace enc = sensor_msgs::image_encodings;
@@ -20,16 +19,17 @@ class ImageConverter
   image_transport::ImageTransport it_;
   image_transport::Subscriber image_sub_;
   image_transport::Publisher image_pub_;
+  cv::Mat src, src_hsv, dst;
   ros::Subscriber laserScan;
   sensor_msgs::LaserScan scan;
+
 public:
   ImageConverter()
     : it_(nh_)
   {
     image_pub_ = it_.advertise("out", 1);
     image_sub_ = it_.subscribe("in", 1, &ImageConverter::imageCb, this);
-    laserScan = nh_.subscribe("/scan", 1, &scanCallback);
-
+    laserScan = nh_.subscribe("/scan",1, &ImageConverter::scanCallback, this);
     cv::namedWindow(WINDOW);
   }
 
@@ -44,21 +44,52 @@ public:
     try
     {
       cv_ptr = cv_bridge::toCvCopy(msg, enc::BGR8);
+      //IplImage *cvImage = cv_ptr;
+      src = cv_ptr->image.clone();
+
     }
     catch (cv_bridge::Exception& e)
     {
       ROS_ERROR("cv_bridge exception: %s", e.what());
       return;
     }
-    IplImage cvImage = (IplImage) cv_ptr->image;
-    detect_beacons(&cvImage);
 
-    cv::imshow(WINDOW, cv_ptr->image);
+    IplImage cvImage = src;
+    IplImage* cvImagePtr = &cvImage;
+    /*IplImage cvImageHsv;
+    cvCvtColor(cvImage, cvImageHsv, CV_BGR2HSV);
+    IplImage* imgYellow = cvCreateImage(cvGetSize(&cvImage), IPL_DEPTH_8U, 1);
+    cvInRangeS(&cvImage, cvScalar(22, 100, 100), cvScalar(30, 255, 255), imgYellow);
+    /*IplImage* imgBlue = cvCreateImage(cvGetSize(&cvImage), IPL_DEPTH_8U, 1);
+    cvInRangeS(&cvImage, cvScalar(90, 100, 100), cvScalar(125, 255, 255), imgBlue);
+    IplImage* imgGreen = cvCreateImage(cvGetSize(&cvImage), IPL_DEPTH_8U, 1);
+    cvInRangeS(&cvImage, cvScalar(44, 100, 100), cvScalar(65, 255, 255), imgGreen);
+    IplImage* imgPink = cvCreateImage(cvGetSize(&cvImage), IPL_DEPTH_8U, 1);
+    cvInRangeS(&cvImage, cvScalar(160, 100, 100), cvScalar(170, 255, 255), imgPink);*/
+    detect_beacons(cvImagePtr);
+
+    //dst = cv::cvarrToMat(imgYellow);
+    //cv::imshow(WINDOW, dst);
     cv::waitKey(3);
 
     image_pub_.publish(cv_ptr->toImageMsg());
   }
+	void detect_beacons(IplImage* cvImage){
+		//color  detection
+		IplImage* frame = 0;
+		IplImage* imgThresh = 0;
+		frame = cvCloneImage(cvImage);
+		cvSmooth(frame, frame, CV_GAUSSIAN,3,3);
 
+		IplImage* imgHSV = cvCreateImage(cvGetSize(frame), IPL_DEPTH_8U, 3);
+		cvCvtColor(frame, imgHSV, CV_BGR2HSV);
+
+		imgThresh=cvCreateImage(cvGetSize(imgHSV),IPL_DEPTH_8U, 1);
+		cvInRangeS(imgHSV, cvScalar(160,100,100), cvScalar(170,255,255), imgThresh);
+		//cvSmooth(imgThresh, imgThresh, CV_GAUSSIAN,3,3);
+		cvShowImage("Found beacons", imgThresh);
+
+	}
   void scanCallback(const sensor_msgs::LaserScan &laserscan) {
     scan = laserscan;
   }
@@ -68,11 +99,11 @@ public:
   //get distance to pillar (assumed closest)
   double getDist(float angle){
     double increment = scan.angle_increment;
-    int pos = angle/increment;  
-    int offset = LASER_MARGIN/increment;
+    int pos = (int)angle/increment;  
+    int offset = (int)LASER_MARGIN/increment;
     double range = 9999;
-    for (int i = pos-offset; i <= pos + offset; i++){
-      if (i >= && i < scan.ranges.size()){
+    for (int i = (pos-offset); i <= (pos + offset); i++){
+      if (i >= 0 && i < scan.ranges.size()){
         if (scan.ranges[i] < range){
           range = scan.ranges[i];
         }
@@ -80,23 +111,6 @@ public:
     }
     return range;
   }
-private:
-	void detect_beacons(IplImage *cvImage){
-		//color  detection
-		IplImage *frame = 0;
-		IplImage* imgThresh = 0;
-		frame = cvImage;
-		cvSmooth(frame, frame, CV_GAUSSIAN,3,3);
-
-		IplImage* imgHSV = cvCreateImage(cvGetSize(frame), IPL_DEPTH_8U, 3);
-		cvCvtColor(frame, imgHSV, CV_BGR2HSV);
-
-		imgThresh=cvCreateImage(cvGetSize(imgHSV),IPL_DEPTH_8U, 1);
-		cvInRangeS(imgHSV, cvScalar(212,160,60), cvScalar(227,255,255), imgThresh);
-		cvSmooth(imgThresh, imgThresh, CV_GAUSSIAN,3,3);
-		cvShowImage("Found beacons", imgThresh);
-
-	}
 
 };
 
