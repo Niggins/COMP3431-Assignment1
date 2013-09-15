@@ -25,7 +25,7 @@ private:
 	void getOrientation(geometry_msgs::Quaternion *ret, geometry_msgs::Point *point,
 	geometry_msgs::Point left, float aLeft);
 	boost::array<double, 36ul> setCovariance(double val);
-	boost::array<double, 36ul> increaseCov(boost::array<double, 36ul> prev, long inc);
+	boost::array<double, 36ul> increaseCov(boost::array<double, 36ul> prev);
 
 	public:
 		trig();

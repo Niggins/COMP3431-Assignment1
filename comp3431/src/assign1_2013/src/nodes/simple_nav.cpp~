@@ -1,6 +1,3 @@
-/*
- * 
- */
 
 #include <ros/ros.h>
 #include <assign1_2013/path.h>
@@ -13,9 +10,9 @@
 
 //Check Numbers
 #define POS_THRESHOLD 0.5
-#define COV_THRESHOLD 10
-#define TURN_SPEED 0.4
-#define FORWARD_SPEED 0.1
+#define COV_THRESHOLD 50
+#define TURN_SPEED 0.3
+#define FORWARD_SPEED 0.3
 #define SPIN_SEARCH_SPEED 0.2
 #define COLLISION_DISTANCE 0.3
 #define ANGLE_THRESHOLD 0.1
@@ -54,6 +51,7 @@ public:
     ROS_INFO("Pos Callback occured");
     if (dest.empty()){
       //Done
+      ROS_INFO("Done");
       return;
     }
 
@@ -62,7 +60,7 @@ public:
           msg.pose.pose.position.x < dest.front().x + POS_THRESHOLD) {
       if (msg.pose.pose.position.y > dest.front().y - POS_THRESHOLD &&
           msg.pose.pose.position.y < dest.front().y + POS_THRESHOLD) {
-     
+          ROS_INFO("Reached the next destination");   
           dest.erase(dest.begin());
           if (dest.empty()){
             return;
@@ -71,10 +69,12 @@ public:
     }
     
     //Do we need transforms here... does it matter??
+    //I don't think transforms are required... we want to be in the odom frame 
+    // not a frame relative to the base of the robot
 
     //Check covariance... if greater than threshold, spin
-
     if (!acceptableCov(msg.pose.covariance)){
+      ROS_INFO("High Covariance, trying to stabilise");
       cmd.linear.y = cmd.linear.x = 0.0;
       cmd.angular.z = SPIN_SEARCH_SPEED;
       return;
@@ -83,10 +83,12 @@ public:
     float diffAngle = facingDest(msg.pose.pose, dest.front());
     if (diffAngle < ANGLE_THRESHOLD && diffAngle > -ANGLE_THRESHOLD){
       //Correct facin g direction
+      ROS_INFO("Moving forward towards target");
       cmd.linear.x = FORWARD_SPEED;
       cmd.linear.y = cmd.angular.z = 0.0;
     } else {
       //Turn to face correct direction     
+      ROS_INFO("Turning towards next target");
       cmd.linear.x = cmd.linear.y = 0.0;
       cmd.angular.z = TURN_SPEED;
       if (diffAngle < 0)

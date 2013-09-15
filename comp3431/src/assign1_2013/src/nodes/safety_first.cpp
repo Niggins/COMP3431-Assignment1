@@ -107,7 +107,7 @@ int main(int argc, char **argv)
                	//pub_cmdVel.publish(original_cmdVel);
 		safe_cmdVel.linear.x = 0.3;
 		pub_cmdVel.publish(safe_cmdVel);		
-ROS_INFO("Continue Onwards\n");
+//ROS_INFO("Continue Onwards\n");
                }
 
         if (isSafetyNeeded){

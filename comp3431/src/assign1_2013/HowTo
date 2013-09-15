@@ -8,6 +8,7 @@ export TURTLEBOT_3D_SENSOR=kinect
 roslaunch turtlebot_bringup minimal.launch 
 
 - open another ssh and run "rosrun hokuyo_node hokuyo_node" to start the laser
+- open another ssh and run "roslaunch openni_launch openni.launch"
 
 --On the Mac--
 For each terminal first run "export ROS_MASTER_URI=http://<robot_name>:11311"
