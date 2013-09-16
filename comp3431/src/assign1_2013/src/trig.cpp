@@ -91,16 +91,25 @@
 
 
 	trig::trig(){
-		prev.pose.position.x = prev.pose.position.y = prev.pose.position.z = 0;
-		prev.pose.orientation.x = prev.pose.orientation.y = prev.pose.orientation.z = 0;
+		prev.pose.position.x = 0;
+		prev.pose.position.y = 0;
+		prev.pose.position.z = 0;
+		prev.pose.orientation.x = 0;
+		prev.pose.orientation.y = 0;
+		prev.pose.orientation.z = 0;
 		prev.covariance = setCovariance(LOW_COV);
 	}
 
 	void trig::getVoPose(geometry_msgs::PoseWithCovariance *ret, SpottedBeacon left, SpottedBeacon right){
 		if (left.beacon == NULL){
       //No beacons spotted
-			ret->pose.position = prev.pose.position;
-			ret->pose.orientation = prev.pose.orientation;
+			ret->pose.position.x = prev.pose.position.x;
+			ret->pose.position.y = prev.pose.position.y;
+			ret->pose.position.z = prev.pose.position.z;
+			ret->pose.orientation.x = prev.pose.orientation.x;
+			ret->pose.orientation.y = prev.pose.orientation.y;
+			ret->pose.orientation.z = prev.pose.orientation.z;
+			ret->pose.orientation.w = prev.pose.orientation.w;
 			ret->covariance = increaseCov(prev.covariance, NO_BEACONS);
 			return;
 		} else if (right.beacon == NULL) {
