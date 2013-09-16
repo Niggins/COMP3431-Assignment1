@@ -220,25 +220,24 @@ public:
     double range = 9999;
     for (int i = pos-offset; i <= pos + offset; i++){
       if (i >= 0 && i < scan.ranges.size()){
-        if (scan.ranges[i] < range){
+        if (scan.ranges[i] < range && scan.ranges[i] > scan.range_min){
           range = scan.ranges[i];
         }
       }
     }
-    ROS_INFO("Distance %a", range);
+    ROS_INFO("Distance %f", range);
     return range;
   }
 
 	float getAngle(double pos, long imageWidth){
 		double halfIm = imageWidth/2;
 		float angle = (pos-halfIm)*(CAM_WIDTH/2)/(halfIm);
-    ROS_INFO("Distance %f", angle);
+    ROS_INFO("Angle %f", angle);
 		return angle;
 	}
 	
 	//Pass in beacon structs and their centre position in the image
   void publish(std::vector <SpottedBeacon> spottedBeacons, long imageWidth){
-    ROS_INFO("PUBLISHING VO!!!!!!!!!!!");
 		odomMsg.header.seq++;
 		SpottedBeacon left;
 		SpottedBeacon right;
@@ -258,7 +257,7 @@ public:
 			}
 		}
 		trig_.getVoPose(&odomMsg.pose, left, right);
-		ROS_INFO("Pose x: %a, y:%a z:%a", odomMsg.pose.pose.position.x, odomMsg.pose.pose.position.y, odomMsg.pose.pose.position.z);
+		ROS_INFO("Pose x: %a, y:%a z:%a", odomMsg.pose.pose.position.x, odomMsg.pose.pose.position.y, odomMsg.pose.pose.orientation.z);
 		vo.publish(odomMsg);
   }
 };

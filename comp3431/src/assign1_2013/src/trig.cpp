@@ -10,6 +10,9 @@
 #define ONE_BEACON 0.1
 #define NO_BEACONS 0.3
 #define PI 3.1415926
+
+//a nan value != itself
+#define CHECKNAN(x,y) if (y == y) x = y
 /**
 * Logic: determine intersecting points from position and distances
 * Determine which is correct one by which is on the left/right
@@ -62,6 +65,7 @@
 			}
 			ret->z = 0;
 		}
+		ROS_INFO("x:%f y:%f", ret->x, ret->y);
 	}
 
 	void trig::getPoint(geometry_msgs::Point *ret, geometry_msgs::Point left, long rLeft,
@@ -103,11 +107,11 @@
 	boost::array<double, 36ul> trig::setCovariance(double val){
 
 		boost::array<double, 36ul> tmp = {{val , 0, 0, 0, 0, 0,
-																				0, val , 0, 0, 0, 0,
-																				0, 0, HIGH_COV, 0, 0, 0,
-																				0, 0, 0, HIGH_COV, 0, 0,
-																				0, 0, 0, 0, HIGH_COV, 0,
-																				0, 0, 0, 0, 0, val}};
+										0, val , 0, 0, 0, 0,
+										0, 0, HIGH_COV, 0, 0, 0,
+										0, 0, 0, HIGH_COV, 0, 0,
+										0, 0, 0, 0, HIGH_COV, 0,
+										0, 0, 0, 0, 0, val}};
 
 		return tmp;
 	}
@@ -123,6 +127,15 @@
 		return tmp;
 	}
 
+	void trig::setPrev(geometry_msgs::PoseWithCovariance *ret){
+		CHECKNAN(prev.pose.position.x, ret->pose.position.x);
+		CHECKNAN(prev.pose.position.y, ret->pose.position.y);
+		CHECKNAN(prev.pose.position.z, ret->pose.position.z);
+		CHECKNAN(prev.pose.orientation.x, ret->pose.position.x);
+		CHECKNAN(prev.pose.orientation.y, ret->pose.position.y);
+		CHECKNAN(prev.pose.orientation.z, ret->pose.position.z);
+		prev.covariance = ret->covariance;		
+	}
 
 	trig::trig(){
 		prev.pose.position.x = 0;
@@ -135,8 +148,9 @@
 	}
 
 	void trig::getVoPose(geometry_msgs::PoseWithCovariance *ret, SpottedBeacon left, SpottedBeacon right){
+		ROS_INFO("Beacon Left: %f %f", left.distance, left.angle);
 		if (left.beacon == NULL){
-      //No beacons spotted
+      		//No beacons spotted
 			ret->pose.position.x = prev.pose.position.x;
 			ret->pose.position.y = prev.pose.position.y;
 			ret->pose.position.z = prev.pose.position.z;
@@ -145,28 +159,26 @@
 			ret->pose.orientation.z = prev.pose.orientation.z;
 			ret->pose.orientation.w = prev.pose.orientation.w;
 			ret->covariance = increaseCov(prev.covariance, NO_BEACONS);
+			ROS_INFO("Trig Pose 0 x: %f, y:%f z:%f", ret->pose.position.x, ret->pose.position.y, ret->pose.orientation.z);		
 			return;
 		} else if (right.beacon == NULL) {
-      //One beacon spotted
-      //Get position closest to the last known position on the circle around the beacon
-      //Get angle from this assumed position
-      getSinglePoint(&ret->pose.position, left.beacon->position, left.distance);
-      getOrientation(&ret->pose.orientation, &ret->pose.position, left.beacon->position, left.angle);
+	      //One beacon spotted
+	      //Get position closest to the last known position on the circle around the beacon
+	      //Get angle from this assumed position
+	      getSinglePoint(&ret->pose.position, left.beacon->position, left.distance);
+	      getOrientation(&ret->pose.orientation, &ret->pose.position, left.beacon->position, left.angle);
 		  ret->covariance = increaseCov(prev.covariance, ONE_BEACON);
-
-		  prev.pose.position = ret->pose.position;
-		  prev.pose.orientation = ret->pose.orientation;
-		  prev.covariance = ret->covariance;
-
-      return;      
-    }
+		  setPrev(ret);
+		  ROS_INFO("Trig Pose 1 x: %f, y:%f z:%f", ret->pose.position.x, ret->pose.position.y, ret->pose.orientation.z);		
+		
+      	  return;      
+    	}
     
 		getPoint(&ret->pose.position, left.beacon->position, left.distance, right.beacon->position, right.distance);
 		getOrientation(&ret->pose.orientation, &ret->pose.position, left.beacon->position, left.angle);
 		ret->covariance = setCovariance(LOW_COV);
 
-		prev.pose.position = ret->pose.position;
-		prev.pose.orientation = ret->pose.orientation;
-		prev.covariance = ret->covariance;
+        setPrev(ret);
+		ROS_INFO("Trig Pose 2 x: %f, y:%f z:%f", ret->pose.position.x, ret->pose.position.y, ret->pose.orientation.z);		
 	}
 
