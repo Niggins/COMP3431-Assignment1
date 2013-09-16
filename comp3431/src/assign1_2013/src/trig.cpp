@@ -21,13 +21,47 @@
 	   * Logic: use latest position and distance to beacon to determine most likely spot, pass with increased covariance
 	   * Angle can be determined from the supposed location and the beacon
 	   */
-	   
-	  double vX = prev.pose.position.x - left.x;
-    double vY = prev.pose.position.y - left.y;
-    double magV = sqrt(vX*vX + vY*vY);
-    ret->x = left.x + vX / (magV * rLeft);
-    ret->y = left.y + vY / (magV * rLeft);
-	  ret->z = 0.0;
+	    geometry_msgs::Point temp;
+	    geometry_msgs::Point pos1;
+	    geometry_msgs::Point pos2;
+	    //temp is distance 1 away from previous known pos from 
+	    temp.x = prev.position.x + cos(prev.orientation.z);
+	    temp.y = prev.position.y + sin(prev.orientation.z);
+	    //x1y2-x2y1 Discriminant
+	   	double D = prev.position.x*temp.y - temp.x*prev.position.y;
+	   	double delta = rLeft*rLeft - D*D;
+
+	   	if (delta < 0) {
+	   		//No intersection between line and circle
+			double vX = prev.pose.position.x - left.x;
+		    double vY = prev.pose.position.y - left.y;
+		    double magV = sqrt(vX*vX + vY*vY);
+		    ret->x = left.x + vX / (magV * rLeft);
+		    ret->y = left.y + vY / (magV * rLeft);
+			ret->z = 0.0;
+		} else {
+			//At least one connection
+			int sign = 1;
+			double dy = temp.y - prev.position.y;
+			double dx = temp.x - prev.position.x; 
+			if (dy < 0)
+				sign = -1;
+			pos1.x = D*dy + sign*dx*delta;
+			pos1.y = -1*D*dx + abs(dy)*D;
+			pos2.x = D*dy - sign*dx*delta;
+			pos2.y = -1*D*dx - abs(dy)*D;
+
+			double d1 = pow(prev.position.x-pos1.x, 2)+pow(prev.position.y-pos1.y, 2);
+			double d2 = pow(prev.position.x-pos2.x, 2)+pow(prev.position.y-pos2.y, 2);
+			if (d1 > d2) {
+				ret->x = pos2.x;
+				ret->y = pos2.y;
+			} else {
+				ret->x = pos1.x;
+				ret->y = pos1.y;
+			}
+			ret->z = 0;
+		}
 	}
 
 	void trig::getPoint(geometry_msgs::Point *ret, geometry_msgs::Point left, long rLeft,
