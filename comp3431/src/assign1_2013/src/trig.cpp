@@ -25,15 +25,15 @@
 	    geometry_msgs::Point pos1;
 	    geometry_msgs::Point pos2;
 	    //temp is distance 1 away from previous known pos from 
-	    temp.x = prev.position.x + cos(prev.orientation.z);
-	    temp.y = prev.position.y + sin(prev.orientation.z);
+	    temp.x = prev.pose.position.x + cos(prev.pose.orientation.z);
+	    temp.y = prev.pose.position.y + sin(prev.pose.orientation.z);
 	    //x1y2-x2y1 Discriminant
-	   	double D = prev.position.x*temp.y - temp.x*prev.position.y;
+	   	double D = prev.pose.position.x*temp.y - temp.x*prev.pose.position.y;
 	   	double delta = rLeft*rLeft - D*D;
 
 	   	if (delta < 0) {
 	   		//No intersection between line and circle
-			double vX = prev.pose.position.x - left.x;
+			  double vX = prev.pose.position.x - left.x;
 		    double vY = prev.pose.position.y - left.y;
 		    double magV = sqrt(vX*vX + vY*vY);
 		    ret->x = left.x + vX / (magV * rLeft);
@@ -42,17 +42,17 @@
 		} else {
 			//At least one connection
 			int sign = 1;
-			double dy = temp.y - prev.position.y;
-			double dx = temp.x - prev.position.x; 
+			double dy = temp.y - prev.pose.position.y;
+			double dx = temp.x - prev.pose.position.x; 
 			if (dy < 0)
 				sign = -1;
-			pos1.x = D*dy + sign*dx*delta;
-			pos1.y = -1*D*dx + abs(dy)*D;
-			pos2.x = D*dy - sign*dx*delta;
-			pos2.y = -1*D*dx - abs(dy)*D;
+			pos1.x = D*dy + sign*dx*sqrt(delta);
+			pos1.y = -1*D*dx + abs(dy)*sqrt(delta);
+			pos2.x = D*dy - sign*dx*sqrt(delta);
+			pos2.y = -1*D*dx - abs(dy)*sqrt(delta);
 
-			double d1 = pow(prev.position.x-pos1.x, 2)+pow(prev.position.y-pos1.y, 2);
-			double d2 = pow(prev.position.x-pos2.x, 2)+pow(prev.position.y-pos2.y, 2);
+			double d1 = pow(prev.pose.position.x-pos1.x, 2)+pow(prev.pose.position.y-pos1.y, 2);
+			double d2 = pow(prev.pose.position.x-pos2.x, 2)+pow(prev.pose.position.y-pos2.y, 2);
 			if (d1 > d2) {
 				ret->x = pos2.x;
 				ret->y = pos2.y;
