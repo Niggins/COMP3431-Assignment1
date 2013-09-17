@@ -9,6 +9,8 @@
 #include <vector>
 #include <sensor_msgs/LaserScan.h>
 #include <nav_msgs/Odometry.h>
+#include <geometry_msgs/PoseWithCovariance.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <assign1_2013/beacons.h>
 #include <assign1_2013/trig.h>
 #include <tf/transform_listener.h>
@@ -43,6 +45,8 @@ class ImageConverter
 	trig trig_;
 	comp3431::Beacons beaconList;
 	std::string beaconColors[4];	
+  geometry_msgs::PoseWithCovariance prevPoint;
+  ros::Subscriber odomSub;
 
 public:
   ImageConverter()
@@ -51,6 +55,7 @@ public:
     image_pub_ = it_.advertise("out", 1);
     image_sub_ = it_.subscribe("in", 1, &ImageConverter::imageCb, this);
     laserScan = nh_.subscribe("/scan", 1, &ImageConverter::scanCallback, this);
+    odomSub = nh_.subscribe("robot_pose_ekf/odom_combined", 1, &ImageConverter::odomCallback, this);
     odomMsg.child_frame_id = "base_footprint";
     odomMsg.header.frame_id = "odom_combined";
 		vo = nh_.advertise<nav_msgs::Odometry>("/vo", 1);
@@ -237,7 +242,10 @@ public:
     ROS_INFO("GET ANGLE A:%f pos:%f imWidth:%ld", angle, pos, imageWidth);
 		return angle;
 	}
-	
+
+  void odomCallback(const geometry_msgs::PoseWithCovarianceStamped &msg){
+    prevPoint = msg.pose;
+  }
 	//Pass in beacon structs and their centre position in the image
   void publish(std::vector <SpottedBeacon> spottedBeacons, long imageWidth){
 		odomMsg.header.seq++;
@@ -260,7 +268,7 @@ public:
 				}
 			}
 		}
-		trig_.getVoPose(&odomMsg.pose, left, right);
+		trig_.getVoPose(&odomMsg.pose, left, right, prevPoint);
 		ROS_INFO("Pose x: %f, y:%f z:%f", odomMsg.pose.pose.position.x, odomMsg.pose.pose.position.y, odomMsg.pose.pose.orientation.z);
 		vo.publish(odomMsg);
   }

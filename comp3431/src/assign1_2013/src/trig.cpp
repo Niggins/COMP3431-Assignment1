@@ -7,8 +7,8 @@
 
 #define HIGH_COV 9999
 #define LOW_COV 0.01
-#define ONE_BEACON 0.1
-#define NO_BEACONS 0.3
+#define ONE_BEACON 0.2
+#define NO_BEACONS 1
 #define PI 3.1415926
 
 //a nan value != itself
@@ -19,7 +19,8 @@
 * http://paulbourke.net/geometry/circlesphere/
 */
 
-	void trig::getSinglePoint(geometry_msgs::Point *ret, geometry_msgs::Point left, long rLeft){
+	void trig::getSinglePoint(geometry_msgs::Point *ret, geometry_msgs::Point left, long rLeft, 
+		geometry_msgs::PoseWithCovariance prev){
 	  /**
 	   * Logic: use latest position and distance to beacon to determine most likely spot, pass with increased covariance
 	   * Angle can be determined from the supposed location and the beacon
@@ -134,27 +135,10 @@
 		return tmp;
 	}
 
-	void trig::setPrev(geometry_msgs::PoseWithCovariance *ret){
-		CHECKNAN(prev.pose.position.x, ret->pose.position.x);
-		CHECKNAN(prev.pose.position.y, ret->pose.position.y);
-		CHECKNAN(prev.pose.position.z, ret->pose.position.z);
-		CHECKNAN(prev.pose.orientation.x, ret->pose.position.x);
-		CHECKNAN(prev.pose.orientation.y, ret->pose.position.y);
-		CHECKNAN(prev.pose.orientation.z, ret->pose.position.z);
-		prev.covariance = ret->covariance;		
-	}
+	trig::trig(){}
 
-	trig::trig(){
-		prev.pose.position.x = 0;
-		prev.pose.position.y = 0;
-		prev.pose.position.z = 0;
-		prev.pose.orientation.x = 0;
-		prev.pose.orientation.y = 0;
-		prev.pose.orientation.z = 0;
-		prev.covariance = setCovariance(LOW_COV);
-	}
-
-	void trig::getVoPose(geometry_msgs::PoseWithCovariance *ret, SpottedBeacon left, SpottedBeacon right){
+	void trig::getVoPose(geometry_msgs::PoseWithCovariance *ret, SpottedBeacon left, SpottedBeacon right, 
+		geometry_msgs::PoseWithCovariance prev){
 		ROS_INFO("Beacon Left: %f %f", left.distance, left.angle);
 		if (left.beacon == NULL){
       		//No beacons spotted
@@ -165,17 +149,16 @@
 			ret->pose.orientation.y = prev.pose.orientation.y;
 			ret->pose.orientation.z = prev.pose.orientation.z;
 			ret->pose.orientation.w = prev.pose.orientation.w;
-			ret->covariance = increaseCov(prev.covariance, NO_BEACONS);
+			ret->covariance = setCovariance(NO_BEACONS);
 			ROS_INFO("Trig Pose 0 x: %f, y:%f z:%f", ret->pose.position.x, ret->pose.position.y, ret->pose.orientation.z);		
 			return;
 		} else if (right.beacon == NULL) {
 	      //One beacon spotted
 	      //Get position closest to the last known position on the circle around the beacon
 	      //Get angle from this assumed position
-	      getSinglePoint(&ret->pose.position, left.beacon->position, left.distance);
+	      getSinglePoint(&ret->pose.position, left.beacon->position, left.distance, prev);
 	      getOrientation(&ret->pose.orientation, &ret->pose.position, left.beacon->position, left.angle);
-		  ret->covariance = increaseCov(prev.covariance, ONE_BEACON);
-		  setPrev(ret);
+		  ret->covariance = setCovariance(ONE_BEACON);
 		  ROS_INFO("Trig Pose 1 x: %f, y:%f z:%f", ret->pose.position.x, ret->pose.position.y, ret->pose.orientation.z);		
 		
       	  return;      
@@ -185,7 +168,6 @@
 		getOrientation(&ret->pose.orientation, &ret->pose.position, left.beacon->position, left.angle);
 		ret->covariance = setCovariance(LOW_COV);
 
-        setPrev(ret);
-		ROS_INFO("Trig Pose 2 x: %f, y:%f z:%f", ret->pose.position.x, ret->pose.position.y, ret->pose.orientation.z);		
+        ROS_INFO("Trig Pose 2 x: %f, y:%f z:%f", ret->pose.position.x, ret->pose.position.y, ret->pose.orientation.z);		
 	}
 

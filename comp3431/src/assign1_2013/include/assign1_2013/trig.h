@@ -18,10 +18,10 @@ public:
 
 class trig {
 private:
-	geometry_msgs::PoseWithCovariance prev;
 	void getPoint(geometry_msgs::Point *ret, geometry_msgs::Point left, long rLeft,
 	geometry_msgs::Point right, long rRight);
-	void getSinglePoint(geometry_msgs::Point *ret, geometry_msgs::Point left, long rLeft);
+	void getSinglePoint(geometry_msgs::Point *ret, geometry_msgs::Point left, long rLeft, 
+		geometry_msgs::PoseWithCovariance prev);
 	void getOrientation(geometry_msgs::Quaternion *ret, geometry_msgs::Point *point,
 	geometry_msgs::Point left, float aLeft);
 	void setPrev(geometry_msgs::PoseWithCovariance *ret);
@@ -30,5 +30,6 @@ private:
 
 	public:
 		trig();
-		void getVoPose(geometry_msgs::PoseWithCovariance *ret, SpottedBeacon left, SpottedBeacon right);
+		void getVoPose(geometry_msgs::PoseWithCovariance *ret, SpottedBeacon left, SpottedBeacon right, 
+			geometry_msgs::PoseWithCovariance prev);
 };
