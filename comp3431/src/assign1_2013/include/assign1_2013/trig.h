@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseWithCovariance.h>
 #include <assign1_2013/beacons.h>
 struct SpottedBeacon {
@@ -21,7 +22,7 @@ private:
 	void getPoint(geometry_msgs::Point *ret, geometry_msgs::Point left, long rLeft,
 	geometry_msgs::Point right, long rRight);
 	void getSinglePoint(geometry_msgs::Point *ret, geometry_msgs::Point left, long rLeft, 
-		geometry_msgs::PoseWithCovariance prev);
+		geometry_msgs::PoseStamped &prev);
 	void getOrientation(geometry_msgs::Quaternion *ret, geometry_msgs::Point *point,
 	geometry_msgs::Point left, float aLeft);
 	void setPrev(geometry_msgs::PoseWithCovariance *ret);
@@ -31,5 +32,5 @@ private:
 	public:
 		trig();
 		void getVoPose(geometry_msgs::PoseWithCovariance *ret, SpottedBeacon left, SpottedBeacon right, 
-			geometry_msgs::PoseWithCovariance prev);
+			geometry_msgs::PoseStamped &prev);
 };

@@ -45,8 +45,10 @@ class ImageConverter
 	trig trig_;
 	comp3431::Beacons beaconList;
 	std::string beaconColors[4];	
-  geometry_msgs::PoseWithCovariance prevPoint;
+  geometry_msgs::PoseStamped prevPoint;
   ros::Subscriber odomSub;
+
+  tf::TransformListener tfListener;
 
 public:
   ImageConverter()
@@ -243,9 +245,35 @@ public:
 		return angle;
 	}
 
-  void odomCallback(const geometry_msgs::PoseWithCovarianceStamped &msg){
-    prevPoint = msg.pose;
+  geometry_msgs::PoseStamped getStampedPose(const geometry_msgs::PoseWithCovarianceStamped &msg){
+    ROS_INFO("****************************SAVED ODOM*******************************");
+    ROS_INFO("Passed Pose x: %f, y: %f, z: %f", msg.pose.pose.position.x, msg.pose.pose.position.y, msg.pose.pose.orientation.z);
+    geometry_msgs::PoseStamped ret;
+    ret.header.seq = msg.header.seq;
+    ret.header.stamp = msg.header.stamp;
+    ret.header.frame_id = msg.header.frame_id;
+
+    ret.pose.position.x = msg.pose.pose.position.x;
+    ret.pose.position.y = msg.pose.pose.position.y;
+    ret.pose.position.z = msg.pose.pose.position.x;
+    ret.pose.orientation.x = msg.pose.pose.orientation.x;
+    ret.pose.orientation.y = msg.pose.pose.orientation.y;
+    ret.pose.orientation.z = msg.pose.pose.orientation.z;
+    ret.pose.orientation.w = msg.pose.pose.orientation.w;
+    return ret;
   }
+
+  void odomCallback(const geometry_msgs::PoseWithCovarianceStamped &msg){
+    if (!tfListener.canTransform("vo", "odom_combined", ros::Time::now())){
+      ROS_ERROR("Cannot get transform at time now");
+      return;
+    }
+    ROS_INFO("Saved Odom");
+    geometry_msgs::PoseStamped stamped = getStampedPose(msg);
+    tfListener.transformPose("vo", stamped, prevPoint);
+
+  }
+
 	//Pass in beacon structs and their centre position in the image
   void publish(std::vector <SpottedBeacon> spottedBeacons, long imageWidth){
 		odomMsg.header.seq++;
@@ -268,8 +296,9 @@ public:
 				}
 			}
 		}
+    ROS_INFO("Prev x: %f, y: %f, z:%f", prevPoint.pose.position.x, prevPoint.pose.position.y, prevPoint.pose.orientation.z);
 		trig_.getVoPose(&odomMsg.pose, left, right, prevPoint);
-		ROS_INFO("Pose x: %f, y:%f z:%f", odomMsg.pose.pose.position.x, odomMsg.pose.pose.position.y, odomMsg.pose.pose.orientation.z);
+		ROS_INFO("Pose x: %f, y:%f, z:%f", odomMsg.pose.pose.position.x, odomMsg.pose.pose.position.y, odomMsg.pose.pose.orientation.z);
 		vo.publish(odomMsg);
   }
 };

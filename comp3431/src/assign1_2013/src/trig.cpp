@@ -20,7 +20,7 @@
 */
 
 	void trig::getSinglePoint(geometry_msgs::Point *ret, geometry_msgs::Point left, long rLeft, 
-		geometry_msgs::PoseWithCovariance prev){
+		geometry_msgs::PoseStamped &prev){
 	  /**
 	   * Logic: use latest position and distance to beacon to determine most likely spot, pass with increased covariance
 	   * Angle can be determined from the supposed location and the beacon
@@ -138,7 +138,7 @@
 	trig::trig(){}
 
 	void trig::getVoPose(geometry_msgs::PoseWithCovariance *ret, SpottedBeacon left, SpottedBeacon right, 
-		geometry_msgs::PoseWithCovariance prev){
+		geometry_msgs::PoseStamped &prev){
 		ROS_INFO("Beacon Left: %f %f", left.distance, left.angle);
 		if (left.beacon == NULL){
       		//No beacons spotted
