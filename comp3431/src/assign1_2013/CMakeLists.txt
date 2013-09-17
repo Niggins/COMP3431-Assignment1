@@ -78,6 +78,7 @@ add_executable(visual src/nodes/visual.cpp src/path.cpp src/beacons.cpp)
 add_executable(simple_nav src/nodes/simple_nav.cpp src/path.cpp)
 add_executable(safety_first src/nodes/safety_first.cpp)
 add_executable(detector src/nodes/detector.cpp src/beacons.cpp src/trig.cpp)
+add_executable(odom_clean src/nodes/odom_clean.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -85,6 +86,7 @@ add_dependencies(visual ${PROJECT_NAME} roscpp ${PROJECT_NAME}_generate_messages
 add_dependencies(simple_nav ${PROJECT_NAME} roscpp ${PROJECT_NAME}_generate_messages_cpp simple_nav_gencpp)
 add_dependencies(safety_first ${PROJECT_NAME} roscpp ${PROJECT_NAME}_generate_messages_cpp safety_first_gencpp)
 add_dependencies(detector ${PROJECT_NAME} roscpp ${PROJECT_NAME}_generate_messages_cpp safety_first_gencpp)
+add_dependencies(odom_clean ${PROJECT_NAME} roscpp ${PROJECT_NAME}_generate_messages_cpp odom_clean_gencpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(visual
@@ -99,7 +101,9 @@ target_link_libraries(safety_first
 target_link_libraries(detector
    ${catkin_LIBRARIES}
 )
-
+target_link_libraries(odom_clean
+   ${catkin_LIBRARIES}
+)
 #############
 ## Install ##
 #############
@@ -115,7 +119,7 @@ target_link_libraries(detector
 # )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS assign1_2013 visual simple_nav safety_first detector
+install(TARGETS assign1_2013 visual simple_nav safety_first detector odom_clean
    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

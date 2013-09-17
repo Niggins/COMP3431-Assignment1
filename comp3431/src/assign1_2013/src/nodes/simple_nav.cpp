@@ -17,7 +17,6 @@
 #define COLLISION_DISTANCE 0.3
 #define ANGLE_THRESHOLD 0.1
 
-
 class simple_nav{
 private:
     ros::NodeHandle n;

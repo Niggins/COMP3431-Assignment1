@@ -27,16 +27,22 @@
 	    geometry_msgs::Point temp;
 	    geometry_msgs::Point pos1;
 	    geometry_msgs::Point pos2;
+	    geometry_msgs::Point myAdj;
+
+	    //myAdj allows assumption that circle is at 0,0
+	    myAdj.x = prev.pose.position.x - left.x;
+	    myAdj.y = prev.pose.position.y - left.y;
+
 	    //temp is distance 1 away from previous known pos from 
-	    temp.x = prev.pose.position.x + cos(prev.pose.orientation.z);
-	    temp.y = prev.pose.position.y + sin(prev.pose.orientation.z);
+	    temp.x = myAdj.x + cos(prev.pose.orientation.z);
+	    temp.y = myAdj.y + sin(prev.pose.orientation.z);
 	    //x1y2-x2y1 Discriminant
-	   	double D = prev.pose.position.x*temp.y - temp.x*prev.pose.position.y;
+	   	double D = myAdj.x*temp.y - temp.x*myAdj.y;
 	   	double delta = rLeft*rLeft - D*D;
 
 	   	if (delta < 0) {
 	   		//No intersection between line and circle
-			  double vX = prev.pose.position.x - left.x;
+            double vX = prev.pose.position.x - left.x;
 		    double vY = prev.pose.position.y - left.y;
 		    double magV = sqrt(vX*vX + vY*vY);
 		    ret->x = left.x + vX / (magV * rLeft);
@@ -45,8 +51,8 @@
 		} else {
 			//At least one connection
 			int sign = 1;
-			double dy = temp.y - prev.pose.position.y;
-			double dx = temp.x - prev.pose.position.x; 
+			double dy = temp.y - myAdj.y;
+			double dx = temp.x - myAdj.x; 
 			if (dy < 0)
 				sign = -1;
 			pos1.x = D*dy + sign*dx*sqrt(delta);
@@ -54,17 +60,18 @@
 			pos2.x = D*dy - sign*dx*sqrt(delta);
 			pos2.y = -1*D*dx - abs(dy)*sqrt(delta);
 
-			double d1 = pow(prev.pose.position.x-pos1.x, 2)+pow(prev.pose.position.y-pos1.y, 2);
-			double d2 = pow(prev.pose.position.x-pos2.x, 2)+pow(prev.pose.position.y-pos2.y, 2);
+			double d1 = pow(myAdj.x-pos1.x, 2)+pow(myAdj.y-pos1.y, 2);
+			double d2 = pow(myAdj.x-pos2.x, 2)+pow(myAdj.y-pos2.y, 2);
 			if (d1 > d2) {
-				ret->x = pos2.x;
-				ret->y = pos2.y;
+				ret->x = pos2.x + left.x;
+				ret->y = pos2.y + left.y;
 			} else {
-				ret->x = pos1.x;
-				ret->y = pos1.y;
+				ret->x = pos1.x + left.x;
+				ret->y = pos1.y + left.y;
 			}
 			ret->z = 0;
 		}
+		ROS_INFO("lx:%f ly:%f", left.x, left.y);
 		ROS_INFO("x:%f y:%f", ret->x, ret->y);
 	}
 

@@ -208,6 +208,7 @@ public:
 
   void scanCallback(const sensor_msgs::LaserScan &laserscan) {
     scan = laserscan;
+    //ROS_INFO("LaserScan Reading##########################################################");
   }
 
   // Pass angle in radians?? what is easiest
@@ -217,10 +218,11 @@ public:
     double increment = scan.angle_increment;
     int pos = angle/increment;
     int offset = LASER_MARGIN/increment;
-    double range = 9999;
+    double range = 0.0;
     for (int i = pos-offset; i <= pos + offset; i++){
       if (i >= 0 && i < scan.ranges.size()){
-        if (scan.ranges[i] < range && scan.ranges[i] > scan.range_min){
+        //ROS_INFO("Distance Scan range %f", scan.ranges[i]);
+        if ((scan.ranges[i] < range || range == 0) && scan.ranges[i] > scan.range_min){
           range = scan.ranges[i];
         }
       }
@@ -232,7 +234,7 @@ public:
 	float getAngle(double pos, long imageWidth){
 		double halfIm = imageWidth/2;
 		float angle = (pos-halfIm)*(CAM_WIDTH/2)/(halfIm);
-    ROS_INFO("Angle %f", angle);
+    ROS_INFO("GET ANGLE A:%f pos:%f imWidth:%ld", angle, pos, imageWidth);
 		return angle;
 	}
 	
@@ -245,6 +247,8 @@ public:
 			//distance is temporarily used to describe distance from edge of image
 			it->angle = getAngle(it->distance, imageWidth);
 			it->distance = getDist(it->angle);
+      if (it->distance == 0)
+        continue;
 			if (left.beacon == NULL) {
 				left.set(*it);
 			} else {
@@ -257,7 +261,7 @@ public:
 			}
 		}
 		trig_.getVoPose(&odomMsg.pose, left, right);
-		ROS_INFO("Pose x: %a, y:%a z:%a", odomMsg.pose.pose.position.x, odomMsg.pose.pose.position.y, odomMsg.pose.pose.orientation.z);
+		ROS_INFO("Pose x: %f, y:%f z:%f", odomMsg.pose.pose.position.x, odomMsg.pose.pose.position.y, odomMsg.pose.pose.orientation.z);
 		vo.publish(odomMsg);
   }
 };
@@ -267,29 +271,5 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "image_converter");
   ImageConverter ic;
   ros::spin();
-  /*int32_t publish_rate_ = 10;
-  tf::TransformBroadcaster tf_br_;
-  tf::StampedTransform transform;
-  tf::TransformListener listener;
-
-  // set up parent and child frames
-  transform.frame_id_ = std::string("/base_footprint");
-  transform.child_frame_id_ = std::string("/vo");
-
-  // set up publish rate
-  ros::Rate loop_rate(publish_rate_);
-
-  // main loop
-  while (ros::ok()) {
-    try {  
-      listener.lookupTransform("/camera_rgb_frame", "/base_footprint", ros::Time::now(), transform);
-      transform.child_frame_id_ = std::string("/vo");
-      tf_br_.sendTransform(transform);
-    } catch (...){ 
-      ROS_INFO("Failed to find frame");
-    }
-    ros::spinOnce();
-    loop_rate.sleep();
-  }*/
   return 0;
 }
