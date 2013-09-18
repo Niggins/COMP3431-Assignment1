@@ -20,15 +20,10 @@
 #define LASER_MARGIN 0.1
 //Width of kinect FOV in rads
 #define CAM_WIDTH 0.994
-#define CAM_HEIGHT 0.750
-#define IMAGE_WIDTH 640
-#define IMAGE_HEIGHT 480
 #define HIGH_COV 9999
-#define PI_2 1.571
-#define BEACON_COLOR_HEIGHT 0.1
-//a nan value != itself
-#define CHECKNAN(x,y) if (y == y) x = y
-
+#define FOCAL_LENGTH 525
+#define IMAGE_WIDTH 640
+#define COLUMN_COLOR_HEIGHT 0.1
 
 namespace enc = sensor_msgs::image_encodings;
 
@@ -53,10 +48,10 @@ class ImageConverter
 	trig trig_;
 	comp3431::Beacons beaconList;
 	std::string beaconColors[4];	
-  geometry_msgs::Pose prevPoint;
+  geometry_msgs::PoseWithCovariance prevPoint;
   ros::Subscriber odomSub;
-
-  tf::TransformListener tfListener;
+  ros::Subscriber kalmanSub;
+  geometry_msgs::PoseWithCovariance betterPose;
 
 public:
   ImageConverter()
@@ -65,7 +60,8 @@ public:
     image_pub_ = it_.advertise("out", 1);
     image_sub_ = it_.subscribe("in", 1, &ImageConverter::imageCb, this);
     laserScan = nh_.subscribe("/scan", 1, &ImageConverter::scanCallback, this);
-    odomSub = nh_.subscribe("kalman_output", 1, &ImageConverter::posCallback, this);
+    odomSub = nh_.subscribe("robot_pose_ekf/odom_combined", 1, &ImageConverter::odomCallback, this);
+    kalmanSub = nh_.subscribe("kalman_output", 1, &ImageConverter::kalmanCB, this);
     odomMsg.child_frame_id = "base_footprint";
     odomMsg.header.frame_id = "odom_combined";
 		vo = nh_.advertise<nav_msgs::Odometry>("/vo", 1);
@@ -91,9 +87,12 @@ public:
     cv::destroyWindow(WINDOW);
   }
 
+  void kalmanCB(const geometry_msgs::PoseWithCovariance& ret) {
+    betterPose = ret;
+  }
+
   void imageCb(const sensor_msgs::ImageConstPtr& msg)
   {
-    //system("clear");
 		odomMsg.header.stamp = ros::Time::now();
 		long imageWidth = msg->width;
 		std::vector< SpottedBeacon > spottedBeacons;
@@ -189,7 +188,7 @@ public:
               cv::circle(coloredLayer[k], center, 3, cv::Scalar(0, 0, 255), -1);
 							//Add to spotted beacon list
               spotted.angle = getAngle(center.x);
-              spotted.distance = getDist(pinkRect[a].y+pinkRect[a].height, pinkRect[a].y);
+              spotted.distance = getDist(pinkRect[a].y+pinkRect[a].height-7, pinkRect[a].y, spotted.angle);
 							ROS_INFO("Spotted Beacon %s:%s", spotted.beacon->top.c_str(), spotted.beacon->bottom.c_str());
 							spottedBeacons.push_back(spotted);
             }
@@ -231,8 +230,11 @@ public:
   // Pass angle in radians?? what is easiest
   //Checks small subset 0.1 radians either side of assumed position of pillar to
   //get distance to pillar (assumed closest)
-  double getDist(double topBox, double bottomBox) {
-    /*double increment = scan.angle_increment;
+  double getDist(double top, double bottom, float angle) {
+
+    double range = COLUMN_COLOR_HEIGHT*FOCAL_LENGTH/(top-bottom);
+
+/*    double increment = scan.angle_increment;
     int pos = angle/increment;
     int offset = LASER_MARGIN/increment;
     double range = 0.0;
@@ -244,49 +246,20 @@ public:
         }
       }
     }*/
-    //640*320
-    float all = (topBox-IMAGE_HEIGHT/2)*(CAM_HEIGHT/2)/(IMAGE_HEIGHT/2);
-    float b = (bottomBox-IMAGE_HEIGHT/2)*(CAM_HEIGHT/2)/(IMAGE_HEIGHT/2);
-    float a = all - b;
-    float topAngle = PI_2-all;
-    double toBottom = sin(topAngle)*BEACON_COLOR_HEIGHT/sin(a);
-    double range = toBottom*acos(b);
-    ROS_INFO("Distance %f, topB: %f, bottomB: %f", range, topBox, bottomBox);
+    ROS_INFO("Distance %f t %f b %f", range, top, bottom);
     return range;
   }
 
 	float getAngle(double pos){
 		double halfIm = IMAGE_WIDTH/2;
 		float angle = (pos-halfIm)*(CAM_WIDTH/2)/(halfIm);
-    ROS_INFO("GET ANGLE A:%f pos:%f", angle, pos);
+    ROS_INFO("Beacon angle A:%f pos:%f imWidth:%ld", angle, pos, IMAGE_WIDTH);
 		return angle;
 	}
 
-  geometry_msgs::Pose getPose(const geometry_msgs::PoseWithCovariance &msg){
-    ROS_INFO("Passed Pose x: %f, y: %f, z: %f", msg.pose.position.x, msg.pose.position.y, msg.pose.orientation.z);
-    geometry_msgs::Pose ret;
-    CHECKNAN(ret.position.x, msg.pose.position.x);
-    CHECKNAN(ret.position.y, msg.pose.position.y);
-    CHECKNAN(ret.position.z, msg.pose.position.x);
-    CHECKNAN(ret.orientation.x, msg.pose.orientation.x);
-    CHECKNAN(ret.orientation.y, msg.pose.orientation.y);
-    CHECKNAN(ret.orientation.z, msg.pose.orientation.z);
-    CHECKNAN(ret.orientation.w, msg.pose.orientation.w);
-    return ret;
+  void odomCallback(const geometry_msgs::PoseWithCovarianceStamped &msg){
+    prevPoint = msg.pose;
   }
-
-  void posCallback(const geometry_msgs::PoseWithCovariance &msg){
-/*    if (!tfListener.canTransform("base_footprint", msg.header.frame_id, ros::Time(0))){
-      ROS_ERROR("CANNOT GET TRANSFORM NOW of %s", msg.header.frame_id.c_str());
-      return;
-    }
-    geometry_msgs::PoseStamped stamped = getStampedPose(msg);*/
-    //   tfListener.transformPose("base_footprint", stamped, prevPoint);
-    ROS_INFO("****************************SAVED ODOM*******************************");
-    prevPoint = getPose(msg);
-    //prevPoint = msg;
-  }
-
 	//Pass in beacon structs and their centre position in the image
   void publish(std::vector <SpottedBeacon> spottedBeacons, long imageWidth){
 		odomMsg.header.seq++;
@@ -300,8 +273,9 @@ public:
         continue;
 			if (left.beacon == NULL) {
 				left.set(*it);
-			} else {
-				if (left.angle < it->angle) {
+			} 
+      else {
+				if (left.distance < it->distance) {
 					right.set(*it);
 				} else {
 					right.set(left);
@@ -309,9 +283,9 @@ public:
 				}
 			}
 		}
-    ROS_INFO("Prev x: %f, y: %f, z:%f", prevPoint.position.x, prevPoint.position.y, prevPoint.orientation.z);
 		trig_.getVoPose(&odomMsg.pose, left, right, prevPoint);
-		ROS_INFO("Pose x: %f, y:%f, z:%f", odomMsg.pose.pose.position.x, odomMsg.pose.pose.position.y, odomMsg.pose.pose.orientation.z);
+    //ROS_INFO("Left Beacon %s:%s", left.beacon->top.c_str(), left.beacon->bottom.c_str());
+		ROS_INFO("Pose x: %f, y:%f z:%f \n", odomMsg.pose.pose.position.x, odomMsg.pose.pose.position.y, odomMsg.pose.pose.orientation.z);
 		vo.publish(odomMsg);
   }
 };

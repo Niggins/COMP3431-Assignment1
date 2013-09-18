@@ -50,56 +50,36 @@ public:
 	//~KalmanFilter() {}
 
 	void odomCallback(const nav_msgs::Odometry &msg) {
-    ROS_INFO("ODOM CALLBACK");
 		odomPoint = getPose(msg);
-    hasOdomPoint = true;
 	}
 
-		
-    void voCallback(const nav_msgs::Odometry &msg)
-    {
-      if (!hasOdomPoint)
-        return;
+  void voCallback(const nav_msgs::Odometry &msg)
+  {
+   	voPoint = getPose(msg);
+  }
 
-      ROS_INFO("VO CALLBACK");
-	   	voPoint = getPose(msg);
-		
-      ROS_INFO("PRE PREDICTION");
-      Mat prediction = KF.predict();
-      Point predictPt(prediction.at<float>(0), prediction.at<float>(1));
-      float PredictTheta(prediction.at<float>(2));
-		
-      ROS_INFO("PRE MEASUREMENT");
-      measurement.at<float>(0, 0) = odomPoint.position.x;
-      measurement.at<float>(1, 0) = odomPoint.position.y;
-      measurement.at<float>(2, 0) = voPoint.orientation.z;
-      //measurement.at<float>(1, 1) = odomPoint.position.y;
-		
-		  //Point measPt(measurement(0), measurement(1));
-        // generate measurement
-        //measurement += KF.measurementMatrix*state;
-      ROS_INFO("VO - x: %f, y: %f", odomPoint.position.x, odomPoint.position.y, voPoint.orientation.z);
-      ROS_INFO("PRE ESTIMATE");
-		  Mat estimated = KF.correct(measurement);
-  		//Point statePt(estimated.at<float>(0),estimated.at<float>(1));
-  		//kalmanv.push_back(statePt);			
-		
-      //randn( processNoise, Scalar(0), Scalar::all(sqrt(KF.processNoiseCov.at<float>(0, 0))));
-      //state = KF.transitionMatrix*state + processNoise;
-      ROS_INFO("PRE PUBLISH");
-		  publish(estimated);
-    }
+  void filter () {
+    Mat prediction = KF.predict();
+	
+    measurement.at<float>(0, 0) = odomPoint.position.x;
+    measurement.at<float>(1, 0) = odomPoint.position.y;
+    measurement.at<float>(2, 0) = voPoint.orientation.z;
 
-    void publish(Mat_<float> estimated) {
-    	geometry_msgs::PoseWithCovariance ret;
-    	ret.pose.position.x = estimated(0);
-    	ret.pose.position.y = estimated(1);
-    	ret.pose.orientation.z = estimated(2);
-    	odomCombPub.publish(ret);
-      ROS_INFO("****************************Published Kalman*******************************");
-    } 
+	  Mat estimated = KF.correct(measurement);
+    //ROS_INFO("Estimated - x: %f, y: %f, or: %f", estimated.at<float>(0), estimated.at<float>(1), estimated.at<float>(2));
+	  publish(estimated);
+  }
 
-    geometry_msgs::Pose getPose(const nav_msgs::Odometry &msg){
+  void publish(Mat_<float> estimated) {
+  	geometry_msgs::PoseWithCovariance ret;
+  	ret.pose.position.x = estimated(0);
+  	ret.pose.position.y = estimated(1);
+  	ret.pose.orientation.z = estimated(2);
+  	odomCombPub.publish(ret);
+    //ROS_INFO("****************************Published Kalman*******************************");
+  } 
+
+  geometry_msgs::Pose getPose(const nav_msgs::Odometry &msg) {
     //ROS_INFO("****************************SAVED ODOM*******************************");
     //ROS_INFO("Passed Pose x: %f, y: %f, z: %f", msg.pose.pose.position.x, msg.pose.pose.position.y, msg.pose.pose.orientation.z);
     geometry_msgs::Pose ret;
@@ -118,6 +98,12 @@ int main(int argc, char** argv)
 {
   init(argc, argv, "kalman_filter");
   RosKalmanFilter rcf;
+  Rate r(10); // 10 hz
+  while (1) {
+    spinOnce();
+    rcf.filter();
+    r.sleep();
+  }
   spin();
   return 0;
 }
