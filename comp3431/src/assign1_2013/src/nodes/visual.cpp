@@ -17,7 +17,8 @@
 
 #include <cv_bridge/cv_bridge.h>
 #include <nav_msgs/Odometry.h>
-
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <geometry_msgs/Pose.h>
 #include <string.h>
 #include <cmath>
 
@@ -86,7 +87,7 @@ public:
 
 	std::string baseFrame, fieldFrame;
 
-	nav_msgs::OdometryConstPtr latestOdom;
+	geometry_msgs::Pose latestOdom;
 
 	cv::Scalar white, pink, yellow, green, blue, black, red, orange, purple, fullBlue;
 	int lineThickness;
@@ -99,15 +100,18 @@ public:
 			lineThickness = 1;
 	}
 
-	void callbackOdom(const nav_msgs::OdometryConstPtr& odom) {
+	void callbackOdom(const nav_msgs::Odometry &odom) {
 //		ROS_ERROR("Odom received.");
-		latestOdom = odom;
+		latestOdom.position.x = odom.pose.pose.position.x;
+		latestOdom.position.y = odom.pose.pose.position.y;
+		latestOdom.orientation.z = odom.pose.pose.orientation.z;
 	}
 
 	void init() {
 		ros::NodeHandle nh;
 		imagePub = nh.advertise<sensor_msgs::Image>("image", 1);
 		odomSub = nh.subscribe("vo", 1, &Visualiser::callbackOdom, this);
+		//odomSub = nh.subscribe("vo", 1, &Visualiser::callbackOdom, this);
 
 		ros::NodeHandle priv("~");
 		priv.param< std::string >("base_frame", baseFrame, DEFAULT_BASE_FRAME);
@@ -241,12 +245,12 @@ public:
 //			ROS_ERROR("Unable to get robot pose for visualisation. (%s)", tfe.what());
 		}
 
-		if (latestOdom != NULL && (ros::Time::now() - latestOdom->header.stamp).toSec() < 5) {
 			std::vector< cv::Point > odom;
-			cv::ellipse2Poly(cv::Point(IMAGE_X(latestOdom->pose.pose.position.x), IMAGE_Y(latestOdom->pose.pose.position.y)),
+			cv::ellipse2Poly(cv::Point(IMAGE_X(latestOdom.position.x), IMAGE_Y(latestOdom.position.y)),
 					cv::Size(2, 2), 0, 0, 360, 15, odom);
 			cv::fillConvexPoly(*cvMat, &odom[0], odom.size(), fullBlue);
-		}
+			DRAW_LINE(latestOdom.position.x,latestOdom.position.y, latestOdom.position.x + 0.3 * cos(latestOdom.orientation.z), latestOdom.position.y + 0.3 * sin(latestOdom.orientation.z), black, 1);
+		
 
 		imagePub.publish(imagePtr);
 	}
