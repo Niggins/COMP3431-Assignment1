@@ -106,6 +106,9 @@ target_link_libraries(detector
 target_link_libraries(odom_clean
    ${catkin_LIBRARIES}
 )
+target_link_libraries(kalman
+   ${catkin_LIBRARIES}
+)
 #############
 ## Install ##
 #############

@@ -100,17 +100,17 @@ public:
 			lineThickness = 1;
 	}
 
-	void callbackOdom(const nav_msgs::Odometry &odom) {
+	void callbackOdom(const geometry_msgs::PoseWithCovariance &odom) {
 //		ROS_ERROR("Odom received.");
-		latestOdom.position.x = odom.pose.pose.position.x;
-		latestOdom.position.y = odom.pose.pose.position.y;
-		latestOdom.orientation.z = odom.pose.pose.orientation.z;
+		latestOdom.position.x = odom.pose.position.x;
+		latestOdom.position.y = odom.pose.position.y;
+		latestOdom.orientation.z = odom.pose.orientation.z;
 	}
 
 	void init() {
 		ros::NodeHandle nh;
 		imagePub = nh.advertise<sensor_msgs::Image>("image", 1);
-		odomSub = nh.subscribe("vo", 1, &Visualiser::callbackOdom, this);
+		odomSub = nh.subscribe("kalman_output", 1, &Visualiser::callbackOdom, this);
 		//odomSub = nh.subscribe("vo", 1, &Visualiser::callbackOdom, this);
 
 		ros::NodeHandle priv("~");
