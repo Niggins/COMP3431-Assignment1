@@ -79,6 +79,7 @@ add_executable(simple_nav src/nodes/simple_nav.cpp src/path.cpp)
 add_executable(safety_first src/nodes/safety_first.cpp)
 add_executable(detector src/nodes/detector.cpp src/beacons.cpp src/trig.cpp)
 add_executable(odom_clean src/nodes/odom_clean.cpp)
+add_executable(kalman src/nodes/kalman.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -87,6 +88,7 @@ add_dependencies(simple_nav ${PROJECT_NAME} roscpp ${PROJECT_NAME}_generate_mess
 add_dependencies(safety_first ${PROJECT_NAME} roscpp ${PROJECT_NAME}_generate_messages_cpp safety_first_gencpp)
 add_dependencies(detector ${PROJECT_NAME} roscpp ${PROJECT_NAME}_generate_messages_cpp safety_first_gencpp)
 add_dependencies(odom_clean ${PROJECT_NAME} roscpp ${PROJECT_NAME}_generate_messages_cpp odom_clean_gencpp)
+add_dependencies(kalman ${PROJECT_NAME} roscpp ${PROJECT_NAME}_generate_messages_cpp kalman_gencpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(visual
