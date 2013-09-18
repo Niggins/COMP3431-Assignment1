@@ -78,7 +78,7 @@ public:
 		  //Point measPt(measurement(0), measurement(1));
         // generate measurement
         //measurement += KF.measurementMatrix*state;
-      ROS_INFO("VO - x: %f, y: %f", odomPoint.position.x, odomPoint.position.y, vo.orientation.z);
+      ROS_INFO("VO - x: %f, y: %f", odomPoint.position.x, odomPoint.position.y, voPoint.orientation.z);
       ROS_INFO("PRE ESTIMATE");
 		  Mat estimated = KF.correct(measurement);
   		//Point statePt(estimated.at<float>(0),estimated.at<float>(1));

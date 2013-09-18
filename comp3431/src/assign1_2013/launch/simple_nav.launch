@@ -14,6 +14,8 @@
     </node>
     <node pkg="assign1_2013" type="kalman" name="kalman_filter" output="screen">
     </node>
+    <node pkg="assign1_2013" type="distance" name="depth_viewer" output="screen">
+    </node>"
 	<!--node pkg="assign1_2013" type="odom_clean" name="odom_clean" output="screen">
     </node-->
 

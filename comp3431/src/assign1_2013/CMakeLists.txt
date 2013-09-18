@@ -80,6 +80,7 @@ add_executable(safety_first src/nodes/safety_first.cpp)
 add_executable(detector src/nodes/detector.cpp src/beacons.cpp src/trig.cpp)
 add_executable(odom_clean src/nodes/odom_clean.cpp)
 add_executable(kalman src/nodes/kalman.cpp)
+add_executable(distance src/nodes/distance.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -89,6 +90,7 @@ add_dependencies(safety_first ${PROJECT_NAME} roscpp ${PROJECT_NAME}_generate_me
 add_dependencies(detector ${PROJECT_NAME} roscpp ${PROJECT_NAME}_generate_messages_cpp safety_first_gencpp)
 add_dependencies(odom_clean ${PROJECT_NAME} roscpp ${PROJECT_NAME}_generate_messages_cpp odom_clean_gencpp)
 add_dependencies(kalman ${PROJECT_NAME} roscpp ${PROJECT_NAME}_generate_messages_cpp kalman_gencpp)
+add_dependencies(distance ${PROJECT_NAME} roscpp ${PROJECT_NAME}_generate_messages_cpp distance_gencpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(visual
@@ -107,6 +109,9 @@ target_link_libraries(odom_clean
    ${catkin_LIBRARIES}
 )
 target_link_libraries(kalman
+   ${catkin_LIBRARIES}
+)
+target_link_libraries(distance
    ${catkin_LIBRARIES}
 )
 #############
