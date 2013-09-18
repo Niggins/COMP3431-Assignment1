@@ -33,13 +33,14 @@ public:
     odomCombPub = nh_.advertise<geometry_msgs::PoseWithCovariance>("kalman_output", 1);
     hasOdomPoint = false;
 
-		KF = KalmanFilter (2, 4, 0);
+		KF = KalmanFilter (3, 3, 0);
     //state = Mat_<float> (2, 1);
-    measurement = Mat_<float> (4,1); 
+    measurement = Mat_<float> (3,1); 
 		measurement.setTo(Scalar(0));
 		KF.statePre.at<float>(0) = 0;
 		KF.statePre.at<float>(1) = 0;
-		KF.transitionMatrix = *(Mat_<float>(2, 2) << 1,0, 0,1);
+    KF.statePre.at<float>(2) = 0;
+		KF.transitionMatrix = *(Mat_<float>(3, 3) << 1,0,0, 0,1,0, 0,0,1);
     setIdentity(KF.measurementMatrix);
     setIdentity(KF.processNoiseCov, Scalar::all(1e-4));
     setIdentity(KF.measurementNoiseCov, Scalar::all(1e-1));
@@ -66,18 +67,18 @@ public:
       ROS_INFO("PRE PREDICTION");
       Mat prediction = KF.predict();
       Point predictPt(prediction.at<float>(0), prediction.at<float>(1));
-      float PredictTheta(prediction.at<float>(2));combine
+      float PredictTheta(prediction.at<float>(2));
 		
       ROS_INFO("PRE MEASUREMENT");
-      measurement.at<float>(0, 0) = voPoint.position.x;
-      measurement.at<float>(1, 0) = voPoint.position.y;
-      measurement.at<float>(0, 1) = odomPoint.position.x;
-      measurement.at<float>(1, 1) = odomPoint.position.y;
+      measurement.at<float>(0, 0) = odomPoint.position.x;
+      measurement.at<float>(1, 0) = odomPoint.position.y;
+      measurement.at<float>(2, 0) = voPoint.orientation.z;
+      //measurement.at<float>(1, 1) = odomPoint.position.y;
 		
 		  //Point measPt(measurement(0), measurement(1));
         // generate measurement
         //measurement += KF.measurementMatrix*state;
-      ROS_INFO("VO - x: %f, y: %f", voPoint.position.x, voPoint.position.y);
+      ROS_INFO("VO - x: %f, y: %f", odomPoint.position.x, odomPoint.position.y, vo.orientation.z);
       ROS_INFO("PRE ESTIMATE");
 		  Mat estimated = KF.correct(measurement);
   		//Point statePt(estimated.at<float>(0),estimated.at<float>(1));
