@@ -18,7 +18,7 @@
     </node-->
 
 
-	<node pkg="robot_pose_ekf" type="robot_pose_ekf" name="robot_pose_ekf">
+	<!--node pkg="robot_pose_ekf" type="robot_pose_ekf" name="robot_pose_ekf">
 	    <param name="output_frame" value="odom_combined"/>
 	    <param name="freq" value="30.0"/>
 	    <param name="sensor_timeout" value="1.0"/>
@@ -28,8 +28,8 @@
 	    <param name="debug" value="false"/>
 	    <param name="self_diagnose" value="false"/>
 	    <param name="pub_odometry" value="true"/>
-	    <!--remap from="odom" to="clean_odom"/-->
-	</node>
+	    <remap from="odom" to="clean_odom"/>
+	</node-->
 
     <node pkg="image_view" type="image_view" name="field_view" />
     <node pkg="image_view" type="image_view" name="camera_view" >

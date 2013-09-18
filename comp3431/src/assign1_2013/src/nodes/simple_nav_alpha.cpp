@@ -1,4 +1,5 @@
 
+
 #include <ros/ros.h>
 #include <assign1_2013/path.h>
 #include <cmath>
@@ -46,7 +47,7 @@ public:
    * Determines whether next destination is and turns towards it
    * and travels forward if nothing is in the way
    */
-  void posCallback(const geometry_msgs::PoseWithCovariance &msg){
+  void posCallback(const nav_msgs::Odometry &msg){
     //ROS_INFO("Pos Callback occured");
     if (dest.empty()){
       //Done
@@ -55,10 +56,10 @@ public:
     }
 
     //Check if we have reached our target
-    if (msg.pose.position.x > dest.front().x - POS_THRESHOLD &&
-          msg.pose.position.x < dest.front().x + POS_THRESHOLD) {
-      if (msg.pose.position.y > dest.front().y - POS_THRESHOLD &&
-          msg.pose.position.y < dest.front().y + POS_THRESHOLD) {
+    if (msg.pose.pose.position.x > dest.front().x - POS_THRESHOLD &&
+          msg.pose.pose.position.x < dest.front().x + POS_THRESHOLD) {
+      if (msg.pose.pose.position.y > dest.front().y - POS_THRESHOLD &&
+          msg.pose.pose.position.y < dest.front().y + POS_THRESHOLD) {
           ROS_INFO("Reached the next destination");   
           dest.erase(dest.begin());
           if (dest.empty()){
@@ -72,14 +73,14 @@ public:
     // not a frame relative to the base of the robot
 
     //Check covariance... if greater than threshold, spin
-    if (!acceptableCov(msg.covariance)){
+    if (!acceptableCov(msg.pose.covariance)){
       ROS_INFO("High Covariance, trying to stabilise");
       cmd.linear.y = cmd.linear.x = 0.0;
       cmd.angular.z = SPIN_SEARCH_SPEED;
       return;
     }
 
-    float diffAngle = facingDest(msg.pose, dest.front());
+    float diffAngle = facingDest(msg.pose.pose, dest.front());
     if (diffAngle < ANGLE_THRESHOLD && diffAngle > -ANGLE_THRESHOLD){
       //Correct facin g direction
       //ROS_INFO("Moving forward towards target");
@@ -100,8 +101,8 @@ public:
     dest = path.points;
     ros::NodeHandle nh;
     geomPub = nh.advertise<geometry_msgs::Twist>("unsafe_cmd_vel", 1);
+    posSub = nh.subscribe("vo", 1, &simple_nav::posCallback, this);
 //    posSub = nh.subscribe("robot_pose_ekf/odom_combined", 1, &simple_nav::posCallback, this);
-    posSub = nh.subscribe("kalman_output", 1, &simple_nav::posCallback, this);
     cmd.linear.x = 0.0;
     cmd.linear.y = 0.0;
     cmd.angular.z = TURN_SPEED;

@@ -65,7 +65,7 @@ public:
     image_pub_ = it_.advertise("out", 1);
     image_sub_ = it_.subscribe("in", 1, &ImageConverter::imageCb, this);
     laserScan = nh_.subscribe("/scan", 1, &ImageConverter::scanCallback, this);
-    odomSub = nh_.subscribe("odom", 1, &ImageConverter::posCallback, this);
+    odomSub = nh_.subscribe("kalman_output", 1, &ImageConverter::posCallback, this);
     odomMsg.child_frame_id = "base_footprint";
     odomMsg.header.frame_id = "odom_combined";
 		vo = nh_.advertise<nav_msgs::Odometry>("/vo", 1);
@@ -262,27 +262,27 @@ public:
 		return angle;
 	}
 
-  geometry_msgs::Pose getPose(const nav_msgs::Odometry &msg){
-    //ROS_INFO("****************************SAVED ODOM*******************************");
-    //ROS_INFO("Passed Pose x: %f, y: %f, z: %f", msg.pose.pose.position.x, msg.pose.pose.position.y, msg.pose.pose.orientation.z);
+  geometry_msgs::Pose getPose(const geometry_msgs::PoseWithCovariance &msg){
+    ROS_INFO("Passed Pose x: %f, y: %f, z: %f", msg.pose.position.x, msg.pose.position.y, msg.pose.orientation.z);
     geometry_msgs::Pose ret;
-    CHECKNAN(ret.position.x, msg.pose.pose.position.x);
-    CHECKNAN(ret.position.y, msg.pose.pose.position.y);
-    CHECKNAN(ret.position.z, msg.pose.pose.position.x);
-    CHECKNAN(ret.orientation.x, msg.pose.pose.orientation.x);
-    CHECKNAN(ret.orientation.y, msg.pose.pose.orientation.y);
-    CHECKNAN(ret.orientation.z, msg.pose.pose.orientation.z);
-    CHECKNAN(ret.orientation.w, msg.pose.pose.orientation.w);
+    CHECKNAN(ret.position.x, msg.pose.position.x);
+    CHECKNAN(ret.position.y, msg.pose.position.y);
+    CHECKNAN(ret.position.z, msg.pose.position.x);
+    CHECKNAN(ret.orientation.x, msg.pose.orientation.x);
+    CHECKNAN(ret.orientation.y, msg.pose.orientation.y);
+    CHECKNAN(ret.orientation.z, msg.pose.orientation.z);
+    CHECKNAN(ret.orientation.w, msg.pose.orientation.w);
     return ret;
   }
 
-  void posCallback(const nav_msgs::Odometry &msg){
+  void posCallback(const geometry_msgs::PoseWithCovariance &msg){
 /*    if (!tfListener.canTransform("base_footprint", msg.header.frame_id, ros::Time(0))){
       ROS_ERROR("CANNOT GET TRANSFORM NOW of %s", msg.header.frame_id.c_str());
       return;
     }
     geometry_msgs::PoseStamped stamped = getStampedPose(msg);*/
     //   tfListener.transformPose("base_footprint", stamped, prevPoint);
+    ROS_INFO("****************************SAVED ODOM*******************************");
     prevPoint = getPose(msg);
     //prevPoint = msg;
   }
