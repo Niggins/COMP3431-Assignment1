@@ -7,8 +7,8 @@
     </node>
     <node pkg="assign1_2013" type="visual" name="field" output="screen" >
     </node>
-  	<node pkg="assign1_2013" type="simple_nav" name="simple_nav" output="screen">
-    </node>
+  	<!--node pkg="assign1_2013" type="simple_nav" name="simple_nav" output="screen">
+    </node-->
    	<node pkg="assign1_2013" type="safety_first" name="safety_first" output="screen">
     </node>
 	<!--node pkg="assign1_2013" type="odom_clean" name="odom_clean" output="screen">

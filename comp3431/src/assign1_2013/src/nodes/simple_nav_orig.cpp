@@ -1,5 +1,4 @@
 
-
 #include <ros/ros.h>
 #include <assign1_2013/path.h>
 #include <cmath>
@@ -47,7 +46,7 @@ public:
    * Determines whether next destination is and turns towards it
    * and travels forward if nothing is in the way
    */
-  void posCallback(const nav_msgs::Odometry &msg){
+  void posCallback(const geometry_msgs::PoseWithCovarianceStamped &msg){
     //ROS_INFO("Pos Callback occured");
     if (dest.empty()){
       //Done
@@ -101,8 +100,7 @@ public:
     dest = path.points;
     ros::NodeHandle nh;
     geomPub = nh.advertise<geometry_msgs::Twist>("unsafe_cmd_vel", 1);
-    posSub = nh.subscribe("vo", 1, &simple_nav::posCallback, this);
-//    posSub = nh.subscribe("robot_pose_ekf/odom_combined", 1, &simple_nav::posCallback, this);
+    posSub = nh.subscribe("robot_pose_ekf/odom_combined", 1, &simple_nav::posCallback, this);
     cmd.linear.x = 0.0;
     cmd.linear.y = 0.0;
     cmd.angular.z = TURN_SPEED;

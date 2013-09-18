@@ -26,6 +26,9 @@
 #define HIGH_COV 9999
 #define PI_2 1.571
 #define BEACON_COLOR_HEIGHT 0.1
+//a nan value != itself
+#define CHECKNAN(x,y) if (y == y) x = y
+
 
 namespace enc = sensor_msgs::image_encodings;
 
@@ -50,7 +53,7 @@ class ImageConverter
 	trig trig_;
 	comp3431::Beacons beaconList;
 	std::string beaconColors[4];	
-  geometry_msgs::PoseStamped prevPoint;
+  geometry_msgs::Pose prevPoint;
   ros::Subscriber odomSub;
 
   tf::TransformListener tfListener;
@@ -62,7 +65,7 @@ public:
     image_pub_ = it_.advertise("out", 1);
     image_sub_ = it_.subscribe("in", 1, &ImageConverter::imageCb, this);
     laserScan = nh_.subscribe("/scan", 1, &ImageConverter::scanCallback, this);
-    odomSub = nh_.subscribe("odom", 1, &ImageConverter::odomCallback, this);
+    odomSub = nh_.subscribe("odom", 1, &ImageConverter::posCallback, this);
     odomMsg.child_frame_id = "base_footprint";
     odomMsg.header.frame_id = "odom_combined";
 		vo = nh_.advertise<nav_msgs::Odometry>("/vo", 1);
@@ -90,7 +93,7 @@ public:
 
   void imageCb(const sensor_msgs::ImageConstPtr& msg)
   {
-    system("clear");
+    //system("clear");
 		odomMsg.header.stamp = ros::Time::now();
 		long imageWidth = msg->width;
 		std::vector< SpottedBeacon > spottedBeacons;
@@ -259,32 +262,29 @@ public:
 		return angle;
 	}
 
-  geometry_msgs::PoseStamped getStampedPose(const nav_msgs::Odometry &msg){
+  geometry_msgs::Pose getPose(const nav_msgs::Odometry &msg){
     //ROS_INFO("****************************SAVED ODOM*******************************");
     //ROS_INFO("Passed Pose x: %f, y: %f, z: %f", msg.pose.pose.position.x, msg.pose.pose.position.y, msg.pose.pose.orientation.z);
-    geometry_msgs::PoseStamped ret;
-    ret.header.seq = msg.header.seq;
-    ret.header.stamp = msg.header.stamp;
-    ret.header.frame_id = msg.header.frame_id;
-
-    ret.pose.position.x = msg.pose.pose.position.x;
-    ret.pose.position.y = msg.pose.pose.position.y;
-    ret.pose.position.z = msg.pose.pose.position.x;
-    ret.pose.orientation.x = msg.pose.pose.orientation.x;
-    ret.pose.orientation.y = msg.pose.pose.orientation.y;
-    ret.pose.orientation.z = msg.pose.pose.orientation.z;
-    ret.pose.orientation.w = msg.pose.pose.orientation.w;
+    geometry_msgs::Pose ret;
+    CHECKNAN(ret.position.x, msg.pose.pose.position.x);
+    CHECKNAN(ret.position.y, msg.pose.pose.position.y);
+    CHECKNAN(ret.position.z, msg.pose.pose.position.x);
+    CHECKNAN(ret.orientation.x, msg.pose.pose.orientation.x);
+    CHECKNAN(ret.orientation.y, msg.pose.pose.orientation.y);
+    CHECKNAN(ret.orientation.z, msg.pose.pose.orientation.z);
+    CHECKNAN(ret.orientation.w, msg.pose.pose.orientation.w);
     return ret;
   }
 
-  void odomCallback(const nav_msgs::Odometry &msg){
+  void posCallback(const nav_msgs::Odometry &msg){
 /*    if (!tfListener.canTransform("base_footprint", msg.header.frame_id, ros::Time(0))){
       ROS_ERROR("CANNOT GET TRANSFORM NOW of %s", msg.header.frame_id.c_str());
       return;
     }
     geometry_msgs::PoseStamped stamped = getStampedPose(msg);*/
- //   tfListener.transformPose("base_footprint", stamped, prevPoint);
-    prevPoint = getStampedPose(msg);
+    //   tfListener.transformPose("base_footprint", stamped, prevPoint);
+    prevPoint = getPose(msg);
+    //prevPoint = msg;
   }
 
 	//Pass in beacon structs and their centre position in the image
@@ -309,7 +309,7 @@ public:
 				}
 			}
 		}
-    ROS_INFO("Prev x: %f, y: %f, z:%f", prevPoint.pose.position.x, prevPoint.pose.position.y, prevPoint.pose.orientation.z);
+    ROS_INFO("Prev x: %f, y: %f, z:%f", prevPoint.position.x, prevPoint.position.y, prevPoint.orientation.z);
 		trig_.getVoPose(&odomMsg.pose, left, right, prevPoint);
 		ROS_INFO("Pose x: %f, y:%f, z:%f", odomMsg.pose.pose.position.x, odomMsg.pose.pose.position.y, odomMsg.pose.pose.orientation.z);
 		vo.publish(odomMsg);
