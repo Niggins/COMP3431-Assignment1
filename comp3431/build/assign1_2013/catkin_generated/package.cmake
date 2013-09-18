@@ -1,0 +1,7 @@
+set(_CATKIN_CURRENT_PACKAGE "assign1_2013")
+set(assign1_2013_MAINTAINER "z3376051 <z3376051@todo.todo>")
+set(assign1_2013_DEPRECATED "")
+set(assign1_2013_VERSION "0.0.0")
+set(assign1_2013_BUILD_DEPENDS "roscpp" "cv_bridge" "geometry_msgs" "nav_msgs" "sensor_msgs" "std_msgs" "tf" "image_transport")
+set(assign1_2013_RUN_DEPENDS "roscpp" "cv_bridge" "geometry_msgs" "nav_msgs" "sensor_msgs" "std_msgs" "tf" "image_transport")
+set(assign1_2013_BUILDTOOL_DEPENDS "catkin")
