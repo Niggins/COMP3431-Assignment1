@@ -47,7 +47,7 @@ public:
    * and travels forward if nothing is in the way
    */
   void posCallback(const geometry_msgs::PoseWithCovarianceStamped &msg){
-    ROS_INFO("Pos Callback occured");
+    //ROS_INFO("Pos Callback occured");
     if (dest.empty()){
       //Done
       ROS_INFO("Done");
@@ -82,12 +82,12 @@ public:
     float diffAngle = facingDest(msg.pose.pose, dest.front());
     if (diffAngle < ANGLE_THRESHOLD && diffAngle > -ANGLE_THRESHOLD){
       //Correct facin g direction
-      ROS_INFO("Moving forward towards target");
+      //ROS_INFO("Moving forward towards target");
       cmd.linear.x = FORWARD_SPEED;
       cmd.linear.y = cmd.angular.z = 0.0;
     } else {
       //Turn to face correct direction     
-      ROS_INFO("Turning towards next target");
+      //ROS_INFO("Turning towards next target");
       cmd.linear.x = cmd.linear.y = 0.0;
       cmd.angular.z = TURN_SPEED;
       if (diffAngle < 0)

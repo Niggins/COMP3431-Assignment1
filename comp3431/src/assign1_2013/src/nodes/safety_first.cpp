@@ -41,7 +41,7 @@ void laser_scan(const sensor_msgs::LaserScan & laserscan)
 
 	for (int i=frontScanNumber; i<rightScanNumber; i++){
 			if (laserscan.ranges[i] < MIN_DISTANCE && laserscan.ranges[i] > laserscan.range_min){
-				ROS_INFO ("right: %f", laserscan.ranges[i]);
+				//ROS_INFO ("right: %f", laserscan.ranges[i]);
 				whichRange = i;
 				isSafetyNeeded = true;
 				turnDirection = -1; //will turn counter-clockwise
@@ -49,7 +49,7 @@ void laser_scan(const sensor_msgs::LaserScan & laserscan)
 		}
 	for (int i=frontScanNumber; i>leftScanNumber; i--){
 			if (laserscan.ranges[i] < MIN_DISTANCE && laserscan.ranges[i] > laserscan.range_min){
-				ROS_INFO ("left: %f", laserscan.ranges[i]);
+				//ROS_INFO ("left: %f", laserscan.ranges[i]);
 				whichRange = i;
 				isSafetyNeeded = true;
 				turnDirection = 1; //will turn clockwise
@@ -113,7 +113,7 @@ int main(int argc, char **argv)
         if (isSafetyNeeded){
         	avoid_obstacle();
         	pub_cmdVel.publish(safe_cmdVel);
-		ROS_INFO("Robot started avoiding\n");
+		      ROS_INFO("Robot started avoiding\n");
             ros::spinOnce();
         	continue;
         }

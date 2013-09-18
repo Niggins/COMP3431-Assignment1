@@ -72,8 +72,8 @@
 			}
 			ret->z = 0;
 		}
-		ROS_INFO("lx:%f ly:%f", left.x, left.y);
-		ROS_INFO("x:%f y:%f", ret->x, ret->y);
+		//ROS_INFO("lx:%f ly:%f", left.x, left.y);
+		//ROS_INFO("x:%f y:%f", ret->x, ret->y);
 	}
 
 	void trig::getPoint(geometry_msgs::Point *ret, geometry_msgs::Point left, long rLeft,
@@ -91,7 +91,7 @@
 		ret->x = pointI.x + h*(right.x - left.x)/d;
 		ret->y = pointI.y - h*(right.y - left.y)/d;
 		ret->z = 0;
-		ROS_INFO("x:%f y:%f", ret->x, ret->y);
+		//ROS_INFO("x:%f y:%f", ret->x, ret->y);
 	}
 
 	/**
@@ -109,7 +109,7 @@
 		}
 		ret->z = toZero + aLeft;
 		ret->x = ret->y = ret->w = 0.0;
-		ROS_INFO("z:%f", ret->z);
+		//ROS_INFO("z:%f", ret->z);
 	}
 
 	boost::array<double, 36ul> trig::setCovariance(double val){
@@ -150,7 +150,7 @@
 			ret->pose.orientation.z = prev.pose.orientation.z;
 			ret->pose.orientation.w = prev.pose.orientation.w;
 			ret->covariance = setCovariance(NO_BEACONS);
-			ROS_INFO("Trig Pose 0 x: %f, y:%f z:%f", ret->pose.position.x, ret->pose.position.y, ret->pose.orientation.z);		
+			//ROS_INFO("Trig Pose 0 x: %f, y:%f z:%f", ret->pose.position.x, ret->pose.position.y, ret->pose.orientation.z);		
 			return;
 		} else if (right.beacon == NULL) {
 	      //One beacon spotted
@@ -159,7 +159,7 @@
 	      getSinglePoint(&ret->pose.position, left.beacon->position, left.distance, prev);
 	      getOrientation(&ret->pose.orientation, &ret->pose.position, left.beacon->position, left.angle);
 		  ret->covariance = setCovariance(ONE_BEACON);
-		  ROS_INFO("Trig Pose 1 x: %f, y:%f z:%f", ret->pose.position.x, ret->pose.position.y, ret->pose.orientation.z);		
+		 // ROS_INFO("Trig Pose 1 x: %f, y:%f z:%f", ret->pose.position.x, ret->pose.position.y, ret->pose.orientation.z);		
 		
       	  return;      
     	}
@@ -168,6 +168,6 @@
 		getOrientation(&ret->pose.orientation, &ret->pose.position, left.beacon->position, left.angle);
 		ret->covariance = setCovariance(LOW_COV);
 
-        ROS_INFO("Trig Pose 2 x: %f, y:%f z:%f", ret->pose.position.x, ret->pose.position.y, ret->pose.orientation.z);		
+       //ROS_INFO("Trig Pose 2 x: %f, y:%f z:%f", ret->pose.position.x, ret->pose.position.y, ret->pose.orientation.z);		
 	}
 
