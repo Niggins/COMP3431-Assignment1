@@ -74,7 +74,7 @@ public:
   	geometry_msgs::PoseWithCovariance ret;
   	ret.pose.position.x = estimated(0);
   	ret.pose.position.y = estimated(1);
-  	ret.pose.orientation.z = estimated(2);
+  	ret.pose.orientation.z = voPoint.orientation.z;
   	odomCombPub.publish(ret);
     //ROS_INFO("****************************Published Kalman*******************************");
   } 
