@@ -88,7 +88,10 @@ public:
   }
 
   void kalmanCB(const geometry_msgs::PoseWithCovariance& ret) {
-    betterPose = ret;
+    betterPose.pose.position.x = ret.pose.position.x;
+    betterPose.pose.position.y = ret.pose.position.y;
+    betterPose.pose.orientation.z = ret.pose.orientation.z;
+    
   }
 
   void imageCb(const sensor_msgs::ImageConstPtr& msg)
@@ -172,10 +175,11 @@ public:
             {
               cv::Point center;
               SpottedBeacon spotted;
+              int centerX = ((pinkRect[a].x + pinkRect[a].width/2)+(minRect[i].x + minRect[i].width/2))/2;
               // Checks if pink rectangle is on top
               if (pinkRect[a].y < minRect[i].y)
               {
-                center = calcRectMid(pinkRect[a], minRect[i]);
+                center = calcRectMid(pinkRect[a], minRect[i]);               
                 spotted.beacon = beaconList.getBeacon(beaconColors[0], beaconColors[k]);
               }
               // Otherwise pink rectangle is on the bottom
@@ -187,10 +191,14 @@ public:
               // Draw a red dot at the center point of the 2 rectangles
               cv::circle(coloredLayer[k], center, 3, cv::Scalar(0, 0, 255), -1);
 							//Add to spotted beacon list
-              spotted.angle = getAngle(center.x);
-              spotted.distance = getDist(pinkRect[a].y+pinkRect[a].height-7, pinkRect[a].y, spotted.angle);
-							ROS_INFO("Spotted Beacon %s:%s", spotted.beacon->top.c_str(), spotted.beacon->bottom.c_str());
-							spottedBeacons.push_back(spotted);
+							if (centerX >= 0 && centerX < IMAGE_WIDTH) {
+                spotted.angle = getAngle(centerX);
+                spotted.distance = getDist(pinkRect[a].y+pinkRect[a].height-7, pinkRect[a].y, spotted.angle);
+							  ROS_INFO("Spotted Beacon %s:%s", spotted.beacon->top.c_str(), spotted.beacon->bottom.c_str());
+							  spottedBeacons.push_back(spotted);
+							} else {
+							  ROS_INFO("Centerx %d", centerX);
+							}
             }
           }
         }
@@ -250,10 +258,10 @@ public:
     return range;
   }
 
-	float getAngle(double pos){
+	float getAngle(long pos){
 		double halfIm = IMAGE_WIDTH/2;
 		float angle = (pos-halfIm)*(CAM_WIDTH/2)/(halfIm);
-    ROS_INFO("Beacon angle A:%f pos:%f imWidth:%ld", angle, pos, IMAGE_WIDTH);
+    ROS_INFO("Beacon angle A:%f pos:%ld imWidth:%d", angle, pos, IMAGE_WIDTH);
 		return angle;
 	}
 
@@ -283,7 +291,7 @@ public:
 				}
 			}
 		}
-		trig_.getVoPose(&odomMsg.pose, left, right, prevPoint);
+		trig_.getVoPose(&odomMsg.pose, left, right, betterPose);
     //ROS_INFO("Left Beacon %s:%s", left.beacon->top.c_str(), left.beacon->bottom.c_str());
 		ROS_INFO("Pose x: %f, y:%f z:%f \n", odomMsg.pose.pose.position.x, odomMsg.pose.pose.position.y, odomMsg.pose.pose.orientation.z);
 		vo.publish(odomMsg);

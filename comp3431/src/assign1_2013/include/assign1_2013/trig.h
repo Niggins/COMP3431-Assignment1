@@ -23,7 +23,7 @@ private:
 	void getSinglePoint(geometry_msgs::Point *ret, geometry_msgs::Point left, long rLeft, 
 		geometry_msgs::PoseWithCovariance prev);
 	void getOrientation(geometry_msgs::Quaternion *ret, geometry_msgs::Point *point,
-	geometry_msgs::Point left, float aLeft);
+	comp3431::Beacon left, float aLeft);
 	void setPrev(geometry_msgs::PoseWithCovariance *ret);
 	boost::array<double, 36ul> setCovariance(double val);
 	boost::array<double, 36ul> increaseCov(boost::array<double, 36ul> prev, long inc);

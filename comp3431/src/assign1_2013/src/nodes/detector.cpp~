@@ -9,6 +9,8 @@
 #include <vector>
 #include <sensor_msgs/LaserScan.h>
 #include <nav_msgs/Odometry.h>
+#include <geometry_msgs/PoseWithCovariance.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <assign1_2013/beacons.h>
 #include <assign1_2013/trig.h>
 #include <tf/transform_listener.h>
@@ -19,6 +21,9 @@
 //Width of kinect FOV in rads
 #define CAM_WIDTH 0.994
 #define HIGH_COV 9999
+#define FOCAL_LENGTH 525
+#define IMAGE_WIDTH 640
+#define COLUMN_COLOR_HEIGHT 0.1
 
 namespace enc = sensor_msgs::image_encodings;
 
@@ -43,6 +48,10 @@ class ImageConverter
 	trig trig_;
 	comp3431::Beacons beaconList;
 	std::string beaconColors[4];	
+  geometry_msgs::PoseWithCovariance prevPoint;
+  ros::Subscriber odomSub;
+  ros::Subscriber kalmanSub;
+  geometry_msgs::PoseWithCovariance betterPose;
 
 public:
   ImageConverter()
@@ -51,6 +60,8 @@ public:
     image_pub_ = it_.advertise("out", 1);
     image_sub_ = it_.subscribe("in", 1, &ImageConverter::imageCb, this);
     laserScan = nh_.subscribe("/scan", 1, &ImageConverter::scanCallback, this);
+    odomSub = nh_.subscribe("robot_pose_ekf/odom_combined", 1, &ImageConverter::odomCallback, this);
+    kalmanSub = nh_.subscribe("kalman_output", 1, &ImageConverter::kalmanCB, this);
     odomMsg.child_frame_id = "base_footprint";
     odomMsg.header.frame_id = "odom_combined";
 		vo = nh_.advertise<nav_msgs::Odometry>("/vo", 1);
@@ -74,6 +85,10 @@ public:
   ~ImageConverter()
   {
     cv::destroyWindow(WINDOW);
+  }
+
+  void kalmanCB(const geometry_msgs::PoseWithCovariance& ret) {
+    betterPose = ret;
   }
 
   void imageCb(const sensor_msgs::ImageConstPtr& msg)
@@ -157,10 +172,11 @@ public:
             {
               cv::Point center;
               SpottedBeacon spotted;
+              int centerX = ((pinkRect[a].x + pinkRect[a].width/2)+(minRect[i].x + minRect[i].width/2))/2;
               // Checks if pink rectangle is on top
               if (pinkRect[a].y < minRect[i].y)
               {
-                center = calcRectMid(pinkRect[a], minRect[i]);
+                center = calcRectMid(pinkRect[a], minRect[i]);               
                 spotted.beacon = beaconList.getBeacon(beaconColors[0], beaconColors[k]);
               }
               // Otherwise pink rectangle is on the bottom
@@ -172,9 +188,14 @@ public:
               // Draw a red dot at the center point of the 2 rectangles
               cv::circle(coloredLayer[k], center, 3, cv::Scalar(0, 0, 255), -1);
 							//Add to spotted beacon list
-              spotted.distance = center.x;
-							ROS_INFO("Spotted Beacon %s:%s", spotted.beacon->top.c_str(), spotted.beacon->bottom.c_str());
-							spottedBeacons.push_back(spotted);
+							if (centerX >= 0 && centerX < IMAGE_WIDTH) {
+                spotted.angle = getAngle(centerX);
+                spotted.distance = getDist(pinkRect[a].y+pinkRect[a].height-7, pinkRect[a].y, spotted.angle);
+							  ROS_INFO("Spotted Beacon %s:%s", spotted.beacon->top.c_str(), spotted.beacon->bottom.c_str());
+							  spottedBeacons.push_back(spotted);
+							} else {
+							  ROS_INFO("Centerx %d", centerX);
+							}
             }
           }
         }
@@ -208,47 +229,57 @@ public:
 
   void scanCallback(const sensor_msgs::LaserScan &laserscan) {
     scan = laserscan;
+    //ROS_INFO("LaserScan Reading##########################################################");
   }
 
   // Pass angle in radians?? what is easiest
   //Checks small subset 0.1 radians either side of assumed position of pillar to
   //get distance to pillar (assumed closest)
-  double getDist(float angle) {
-    double increment = scan.angle_increment;
+  double getDist(double top, double bottom, float angle) {
+
+    double range = COLUMN_COLOR_HEIGHT*FOCAL_LENGTH/(top-bottom);
+
+/*    double increment = scan.angle_increment;
     int pos = angle/increment;
     int offset = LASER_MARGIN/increment;
-    double range = 9999;
+    double range = 0.0;
     for (int i = pos-offset; i <= pos + offset; i++){
       if (i >= 0 && i < scan.ranges.size()){
-        if (scan.ranges[i] < range){
+        //ROS_INFO("Distance Scan range %f", scan.ranges[i]);
+        if ((scan.ranges[i] < range || range == 0) && scan.ranges[i] > scan.range_min){
           range = scan.ranges[i];
         }
       }
-    }
-    ROS_INFO("Distance %ld", range);
+    }*/
+    ROS_INFO("Distance %f t %f b %f", range, top, bottom);
     return range;
   }
 
-	float getAngle(double pos, long imageWidth){
-		double halfIm = imageWidth/2;
+	float getAngle(long pos){
+		double halfIm = IMAGE_WIDTH/2;
 		float angle = (pos-halfIm)*(CAM_WIDTH/2)/(halfIm);
-    ROS_INFO("Distance %f", angle);
+    ROS_INFO("Beacon angle A:%f pos:%ld imWidth:%d", angle, pos, IMAGE_WIDTH);
 		return angle;
 	}
-	
+
+  void odomCallback(const geometry_msgs::PoseWithCovarianceStamped &msg){
+    prevPoint = msg.pose;
+  }
 	//Pass in beacon structs and their centre position in the image
   void publish(std::vector <SpottedBeacon> spottedBeacons, long imageWidth){
-    ROS_INFO("PUBLISHING VO!!!!!!!!!!!");
 		odomMsg.header.seq++;
 		SpottedBeacon left;
 		SpottedBeacon right;
 		for (std::vector<SpottedBeacon>::iterator it = spottedBeacons.begin(); it != spottedBeacons.end(); it++){
 			//distance is temporarily used to describe distance from edge of image
-			it->angle = getAngle(it->distance, imageWidth);
-			it->distance = getDist(it->angle);
+//			it->angle = getAngle(it->distance, imageWidth);
+//			it->distance = getDist(it->angle);
+      if (it->distance == 0)
+        continue;
 			if (left.beacon == NULL) {
 				left.set(*it);
-			} else {
+			} 
+      else {
 				if (left.distance < it->distance) {
 					right.set(*it);
 				} else {
@@ -257,8 +288,9 @@ public:
 				}
 			}
 		}
-		trig_.getVoPose(&odomMsg.pose, left, right);
-		ROS_INFO("Pose x: %ld, y:%ld z:%ld", odomMsg.pose.pose.position.x, odomMsg.pose.pose.position.y, odomMsg.pose.pose.position.z);
+		trig_.getVoPose(&odomMsg.pose, left, right, betterPose);
+    //ROS_INFO("Left Beacon %s:%s", left.beacon->top.c_str(), left.beacon->bottom.c_str());
+		ROS_INFO("Pose x: %f, y:%f z:%f \n", odomMsg.pose.pose.position.x, odomMsg.pose.pose.position.y, odomMsg.pose.pose.orientation.z);
 		vo.publish(odomMsg);
   }
 };
@@ -268,29 +300,5 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "image_converter");
   ImageConverter ic;
   ros::spin();
-  /*int32_t publish_rate_ = 10;
-  tf::TransformBroadcaster tf_br_;
-  tf::StampedTransform transform;
-  tf::TransformListener listener;
-
-  // set up parent and child frames
-  transform.frame_id_ = std::string("/base_footprint");
-  transform.child_frame_id_ = std::string("/vo");
-
-  // set up publish rate
-  ros::Rate loop_rate(publish_rate_);
-
-  // main loop
-  while (ros::ok()) {
-    try {  
-      listener.lookupTransform("/camera_rgb_frame", "/base_footprint", ros::Time::now(), transform);
-      transform.child_frame_id_ = std::string("/vo");
-      tf_br_.sendTransform(transform);
-    } catch (...){ 
-      ROS_INFO("Failed to find frame");
-    }
-    ros::spinOnce();
-    loop_rate.sleep();
-  }*/
   return 0;
 }

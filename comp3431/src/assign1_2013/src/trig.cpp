@@ -99,17 +99,32 @@
 	* Orientation should be determined by angle if facing + left
 	*/
 	void trig::getOrientation(geometry_msgs::Quaternion *ret, geometry_msgs::Point *point,
-	geometry_msgs::Point left, float aLeft){
+	comp3431::Beacon left, float aLeft){
 
 		float toZero;
-		if ((point->x - left.x) == 0) {
+		if ((point->x - left.position.x) == 0) {
 			toZero = PI/2;
 		} else {
-			toZero = atan((point->y - left.y)/(point->x - left.x));
+	    if ((point->x > left.position.x)) {
+        toZero = atan((point->y - left.position.y)/(point->x - left.position.x));
+        if (toZero < 0) {
+          toZero = PI + toZero;
+        } else {
+          toZero = toZero - PI;
+        }
+      } else {
+        toZero = atan((point->y - left.position.y)/(point->x - left.position.x));
+      }
 		}
 		ret->z = toZero + aLeft;
+		while (ret->z >= PI) {
+		  ret->z -= PI;
+		} 
+		while (ret->z < -PI) {
+		  ret->z += PI; 
+		}
 		ret->x = ret->y = ret->w = 0.0;
-		ROS_INFO("point x:%f left x:%f  point y:%f left y: %f aLeft:%f toZero:%f", point->x, left.x, point->y, left.y, aLeft, toZero);
+		ROS_INFO("point x:%f left x:%f  point y:%f left y: %f aLeft:%f toZero:%f", point->x, left.position.x, point->y, left.position.y, aLeft, toZero);
 	}
 
 	boost::array<double, 36ul> trig::setCovariance(double val){
@@ -140,6 +155,7 @@
 	void trig::getVoPose(geometry_msgs::PoseWithCovariance *ret, SpottedBeacon left, SpottedBeacon right, 
 		geometry_msgs::PoseWithCovariance prev){
 		ROS_INFO("Left: %f %f", left.distance, left.angle);
+		ROS_INFO("Prev x %f y %f z %f", prev.pose.position.x, prev.pose.position.y, prev.pose.orientation.z);
 		if (right.beacon != NULL)
 			ROS_INFO("Right: %f %f", right.distance, right.angle);
 		if (left.beacon == NULL){
@@ -159,8 +175,11 @@
 			//One beacon spotted
 			//Get position closest to the last known position on the circle around the beacon
 			//Get angle from this assumed position
-			getSinglePoint(&ret->pose.position, left.beacon->position, left.distance, prev);
-			getOrientation(&ret->pose.orientation, &ret->pose.position, left.beacon->position, left.angle);
+			//getSinglePoint(&ret->pose.position, left.beacon->position, left.distance, prev);
+			ret->pose.position.x = prev.pose.position.x;
+			ret->pose.position.y = prev.pose.position.y;
+			ret->pose.position.z = prev.pose.position.z;
+			getOrientation(&ret->pose.orientation, &ret->pose.position, *left.beacon, left.angle);
 			ret->covariance = setCovariance(ONE_BEACON);
 			//ROS_INFO("Trig Pose 1 x: %f, y:%f z:%f", ret->pose.position.x, ret->pose.position.y, ret->pose.orientation.z);		
 
@@ -168,7 +187,7 @@
     	}
     
 		getPoint(&ret->pose.position, left.beacon->position, left.distance, right.beacon->position, right.distance);
-		getOrientation(&ret->pose.orientation, &ret->pose.position, left.beacon->position, left.angle);
+		getOrientation(&ret->pose.orientation, &ret->pose.position, *left.beacon, left.angle);
 		ret->covariance = setCovariance(LOW_COV);
 
         //ROS_INFO("Trig Pose 2 x: %f, y:%f z:%f", ret->pose.position.x, ret->pose.position.y, ret->pose.orientation.z);		

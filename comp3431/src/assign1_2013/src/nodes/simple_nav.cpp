@@ -9,11 +9,11 @@
 #include <nav_msgs/Odometry.h>
 
 //Check Numbers
-#define POS_THRESHOLD 0.5
+#define POS_THRESHOLD 0.3
 #define COV_THRESHOLD 1
-#define TURN_SPEED 0.3
-#define FORWARD_SPEED 0.3
-#define SPIN_SEARCH_SPEED 0.2
+#define TURN_SPEED 0.15
+#define FORWARD_SPEED 0.2
+#define SPIN_SEARCH_SPEED 0.1
 #define COLLISION_DISTANCE 0.3
 #define ANGLE_THRESHOLD 0.1
 
@@ -29,7 +29,7 @@ private:
       float adj = _pose.position.x - _dest.x;
       float opp = _pose.position.y - _dest.y;
       float theta = atan(opp/adj);
-      return _pose.orientation.z - theta;
+      return fabs(_pose.orientation.z - theta);
     }
 
     bool acceptableCov(const boost::array<double, 36ul> cov){
@@ -80,17 +80,18 @@ public:
     }
 
     float diffAngle = facingDest(msg.pose, dest.front());
+    ROS_INFO("Facing Diff, %f, facing %f", diffAngle, msg.pose.orientation.z); 
     if (diffAngle < ANGLE_THRESHOLD && diffAngle > -ANGLE_THRESHOLD){
       //Correct facin g direction
-      //ROS_INFO("Moving forward towards target");
+      ROS_INFO("Moving forward towards target");
       cmd.linear.x = FORWARD_SPEED;
       cmd.linear.y = cmd.angular.z = 0.0;
     } else {
       //Turn to face correct direction     
-      //ROS_INFO("Turning towards next target");
+      ROS_INFO("Turning towards next target");
       cmd.linear.x = cmd.linear.y = 0.0;
       cmd.angular.z = TURN_SPEED;
-      if (diffAngle < 0)
+      if (diffAngle > 0)
         cmd.angular.z = -TURN_SPEED;
     }
   }
@@ -104,7 +105,7 @@ public:
     posSub = nh.subscribe("kalman_output", 1, &simple_nav::posCallback, this);
     cmd.linear.x = 0.0;
     cmd.linear.y = 0.0;
-    cmd.angular.z = TURN_SPEED;
+    cmd.angular.z = -TURN_SPEED;
   }
 
   void publish(){

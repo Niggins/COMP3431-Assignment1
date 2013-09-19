@@ -104,10 +104,8 @@ int main(int argc, char **argv)
 
 
         if (!isSafetyNeeded && normalRun){
-               	//pub_cmdVel.publish(original_cmdVel);
-		safe_cmdVel.linear.x = 0.3;
-		pub_cmdVel.publish(safe_cmdVel);		
-//ROS_INFO("Continue Onwards\n");
+          pub_cmdVel.publish(original_cmdVel);
+          //ROS_INFO("Continue Onwards\n");
                }
 
         if (isSafetyNeeded){
