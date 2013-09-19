@@ -1,6 +1,6 @@
 <launch>
 	<include file="$(find assign1_2013)/launch/beacons/trial.launch" />
-	<include file="$(find assign1_2013)/launch/path_final.launch" />
+	<!--include file="$(find assign1_2013)/launch/path_final.launch" /-->
 	
     <node pkg="assign1_2013" type="detector" name="image_converter" output="screen">
     	<remap from="in" to="/camera/rgb/image_color" />

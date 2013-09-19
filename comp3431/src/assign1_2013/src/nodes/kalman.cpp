@@ -33,9 +33,9 @@ public:
     odomCombPub = nh_.advertise<geometry_msgs::PoseWithCovariance>("kalman_output", 1);
     hasOdomPoint = false;
 
-		KF = KalmanFilter (3, 3, 0);
+		KF = KalmanFilter (3, 6, 0);
     //state = Mat_<float> (2, 1);
-    measurement = Mat_<float> (3,1); 
+    measurement = Mat_<float> (6,1); 
 		measurement.setTo(Scalar(0));
 		KF.statePre.at<float>(0) = 0;
 		KF.statePre.at<float>(1) = 0;
@@ -63,7 +63,10 @@ public:
 	
     measurement.at<float>(0, 0) = odomPoint.position.x;
     measurement.at<float>(1, 0) = odomPoint.position.y;
-    measurement.at<float>(2, 0) = voPoint.orientation.z;
+    measurement.at<float>(2, 0) = odomPoint.orientation.z;
+    measurement.at<float>(3, 0) = voPoint.position.x;
+    measurement.at<float>(4, 0) = voPoint.position.y;
+    measurement.at<float>(5, 0) = voPoint.orientation.z;
 
 	  Mat estimated = KF.correct(measurement);
     //ROS_INFO("Estimated - x: %f, y: %f, or: %f", estimated.at<float>(0), estimated.at<float>(1), estimated.at<float>(2));
